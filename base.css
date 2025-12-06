@@ -1,0 +1,293 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  background: #000000;
+  margin: 0;
+  padding: 0;
+  overscroll-behavior: none;
+}
+
+html,
+body {
+  width: 100%;
+  height: 700vh;
+  font-family: "Gilroy";
+}
+
+img {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  will-change: transform, scale;
+}
+
+section {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+section.outro {
+  background-color: #1e9e6b;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.outro h1 {
+  color: #fff;
+  text-transform: uppercase;
+  text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.4);
+  font-size: 60px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  line-height: 0.9;
+}
+
+section.sticky {
+  /* background-color: #b4aea7; */
+  /* paper bg */
+  background-image: url("imgs/paper-texture.webp");
+  background-size: cover;
+}
+
+.slider {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.slides {
+  position: relative;
+  width: 500%;
+  height: 100%;
+  display: flex;
+  will-change: transform;
+  transform: translateX(0);
+}
+
+.slide {
+  position: relative;
+  flex: 1;
+  height: 100%;
+  width: 100vw;
+}
+
+.img {
+  display: none;
+
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.title {
+  position: relative;
+  width: max-content;
+  height: 200px;
+  margin: 1.5em;
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 0% 100%);
+  z-index: 2;
+}
+
+.title h1 {
+  position: relative;
+  color: #fff;
+  font-size: 85px;
+  font-weight: 900;
+  letter-spacing: -2px;
+  line-height: 0.9;
+  text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.5);
+  will-change: transform;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: clip;
+}
+
+.lenis.lenis-smooth iframe {
+  pointer-events: none;
+}
+
+/* masked image */
+.masked-image-container--1 {
+  position: absolute;
+  top: 15%;
+  width: 350px;
+  left: 45%;
+}
+
+.masked-image-container--2 {
+  position: absolute;
+  top: 35%;
+  width: 200px;
+  left: 25%;
+}
+.masked-image-container--3 {
+  position: absolute;
+  top: 45%;
+  width: 40%;
+  left: 10%;
+}
+.masked-image-container--4 {
+  position: absolute;
+  top: 40%;
+  width: 250px;
+  left: 33%;
+}
+.masked-image-container--5 {
+  position: absolute;
+  top: 50%;
+  width: 150px;
+  left: 45%;
+}
+
+.masked-image {
+  aspect-ratio: 16 / 9;
+  mask-image: url("https://assets.nintendo.com/image/upload/f_auto,q_auto/Marketing/pmp-paper-mario-ttyd-197h3odh827n/sprite");
+  mask-mode: alpha;
+  mask-position: 0px 0px;
+  mask-size: 100% 700%;
+  overflow: hidden;
+  position: relative;
+}
+
+.masked-image__image-container {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.masked-image__image {
+}
+
+.masked-image--revealed {
+  animation: reveal 0.5s steps(6) 0s 1 normal forwards running;
+
+  .masked-image__surface {
+    animation: applySurface 0.5s steps(6) 0s 1 normal forwards running;
+  }
+}
+
+.masked-image__surface {
+  background-image: url("imgs/paper-mask");
+  background-position: 0% 0%;
+  background-size: 100%;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  inset: 0px;
+  z-index: 1;
+}
+
+@keyframes reveal {
+  0% {
+    mask-position: 0px 0px;
+  }
+
+  100% {
+    mask-position: 0px 100%;
+  }
+}
+
+@keyframes applySurface {
+  0% {
+    background-position: 0px 0px;
+  }
+
+  100% {
+    background-position: 0px 100%;
+  }
+}
+
+/* gridlines */
+.grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.gridline {
+  border-bottom: 1px solid rgba(110, 110, 194, 0.7);
+  container-type: size;
+  display: flex;
+  align-items: flex-end;
+  padding-inline: 1em;
+  line-height: 0.62;
+
+  p {
+    font-size: 65cqh;
+  }
+}
+.gridline--center {
+  justify-content: center;
+}
+
+.gridline--right {
+  justify-content: flex-end;
+}
+
+/* windows */
+.window {
+  width: 100px;
+  height: auto;
+}
+
+/* need to dynamically calculate */
+/* Start with the dash fully offset */
+/* Calculate the path length of the text for accurate animation */
+/* This value needs to be approximated or calculated with JavaScript */
+/* For this example, let's assume a value like 1000 for demonstration */
+.handwritten {
+  height: 200cqh;
+  width: auto;
+  position: relative;
+  z-index: 1;
+
+  stroke-dasharray: 1200;
+  stroke-dashoffset: 1200;
+  animation: drawText ease-in-out 0.3s forwards paused;
+}
+
+.handwritten.written {
+  animation-play-state: running;
+}
+
+/* Animate the offset to 0 to reveal the stroke */
+@keyframes drawText {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.text--center {
+  text-align: center;
+}
+
+.text--right {
+  text-align: right;
+}
+
+.text--left {
+  text-align: left;
+}
