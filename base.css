@@ -29,6 +29,30 @@ img {
   will-change: transform, scale;
 }
 
+.loader {
+  width: 100vw;
+  height: 100vh;
+  background-color: #d6e3f4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logo-container {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  padding: 10vw;
+}
+
+.logo {
+  width: 100px;
+}
+
+.logo--infinity svg {
+  transform: rotate(90deg);
+}
+
 section {
   position: relative;
   width: 100vw;
