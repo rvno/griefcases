@@ -382,3 +382,67 @@ section.sticky {
 .text--left {
   text-align: left;
 }
+
+/* Image Mask Component */
+.image-mask {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.image-mask__overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center bottom;
+  opacity: 1;
+  pointer-events: none;
+  /* Improve rendering crispness */
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  transform: scale(0.98) translateZ(0);
+  transform-origin: center bottom;
+}
+
+.image-mask__masked-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  /* background-image: url("public/imgs/placeholder-1.jpeg");
+  background-size: cover;
+  background-position: center; */
+  -webkit-mask-image: url("public/imgs/Nala-test.png");
+  mask-image: url("public/imgs/Nala-test.png");
+  -webkit-mask-size: 98%;
+  mask-size: 98%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center bottom;
+  mask-position: center bottom;
+  opacity: 0.2;
+  mix-blend-mode: screen;
+  z-index: 1;
+  pointer-events: none;
+  /* Improve rendering crispness */
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+}
+
+.image-mask__masked-bg * {
+  width: 100%;
+  height: 100%;
+}
