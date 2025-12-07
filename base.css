@@ -12,6 +12,7 @@ body {
   margin: 0;
   padding: 0;
   overscroll-behavior: none;
+  overflow: hidden;
 }
 
 html,
@@ -32,17 +33,21 @@ img {
 .loader {
   width: 100vw;
   height: 100vh;
-  background-color: #d6e3f4;
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
 }
 
 .logo-container {
+  background-color: hsl(214deg 58% 90% / 91%);
   display: flex;
+  align-items: center;
   justify-content: space-between;
+  height: 100%;
   width: 100%;
   padding: 10vw;
+  position: relative;
 }
 
 .logo {
@@ -271,6 +276,68 @@ section.sticky {
   justify-content: flex-end;
 }
 
+.noise {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.noise::before {
+  content: "";
+  display: block;
+}
+
+.noise::before {
+  position: absolute;
+  left: -5rem;
+  top: -5rem;
+  width: calc(100% + 20rem);
+  height: calc(100% + 20rem);
+  background-image: url(imgs/noise.png);
+  background-position: 50%;
+  background-size: cover;
+  background-repeat: no-repeat;
+  animation: noise 0.4s steps(2) infinite;
+}
+
+@keyframes noise {
+  0% {
+    transform: translate3d(0, 4rem, 0);
+  }
+
+  10% {
+    transform: translate3d(-1rem, -2rem, 0);
+  }
+  20% {
+    transform: translate3d(-2rem, 1rem, 0);
+  }
+  30% {
+    transform: translate3d(3rem, -2rem, 0);
+  }
+  40% {
+    transform: translate3d(-1rem, 2rem, 0);
+  }
+  50% {
+    transform: translate3d(-2rem, -1rem, 0);
+  }
+  60% {
+    transform: translate3d(1rem, 1rem, 0);
+  }
+  70% {
+    transform: translate3d(2rem, -1rem, 0);
+  }
+  80% {
+    transform: translate3d(-1rem, 0, 0);
+  }
+  90% {
+    transform: translate3d(2rem, -2rem, 0);
+  }
+  100% {
+    transform: translate3d(-2rem, 0, 0);
+  }
+}
 /* windows */
 .window {
   width: 100px;

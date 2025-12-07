@@ -4,3 +4,4 @@
 
 - setup repo
 - port mha section with tweaks
+- static loader w/ noise animation
