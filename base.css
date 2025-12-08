@@ -403,13 +403,14 @@ section.sticky {
   object-fit: contain;
   object-position: center bottom;
   opacity: 1;
+  z-index: 1;
   pointer-events: none;
   /* Improve rendering crispness */
   image-rendering: -webkit-optimize-contrast;
   image-rendering: crisp-edges;
   -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
-  transform: scale(0.98) translateZ(0);
+  transform: translateZ(0);
   transform-origin: center bottom;
 }
 
@@ -424,13 +425,13 @@ section.sticky {
   background-position: center; */
   -webkit-mask-image: url("public/imgs/Nala-test.png");
   mask-image: url("public/imgs/Nala-test.png");
-  -webkit-mask-size: 98%;
-  mask-size: 98%;
+  -webkit-mask-size: contain;
+  mask-size: contain;
   -webkit-mask-repeat: no-repeat;
   mask-repeat: no-repeat;
   -webkit-mask-position: center bottom;
   mask-position: center bottom;
-  opacity: 0.2;
+  opacity: 0.3;
   mix-blend-mode: screen;
   z-index: 1;
   pointer-events: none;
