@@ -3,10 +3,11 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { Pane } from "tweakpane";
 import Stats from "three/addons/libs/Stats.module.js";
 
+import { InputManager } from "./input-manager.js";
+
 class App {
   // Three "setup"
   #three_ = null;
-  #controls_ = null;
   #camera_ = null;
   #scene_ = null;
   #clock_ = null;
@@ -14,6 +15,10 @@ class App {
   // Scene
   #sun_ = null;
   #box_ = null;
+
+  // Scene Controls
+  #controls_ = null;
+  #inputs_ = null;
 
   // Debug & Performance
   #pane_ = null;
@@ -47,6 +52,7 @@ class App {
    * - calls setupThree for setup
    * - calls setupBasicScene to add to the scene
    * - calls setupPane & Stats for debug/perf monitoring
+   * - instantiates the InputManager class
    */
   async #setupProject_() {
     // Debug & Performance
@@ -55,6 +61,10 @@ class App {
 
     this.#setupThree_();
     this.#setupBasicScene_();
+
+    // Input Management
+    this.#inputs_ = new InputManager();
+    this.#inputs_.initialize();
   }
 
   #setupPane_() {
@@ -218,6 +228,11 @@ class App {
     this.#scene_.add(groundMesh);
   }
 
+  /**
+   * Handles resize event
+   * - recalculates the window dimensions and updates the canvas
+   * - then updates the camera based on the new aspect ratio
+   */
   #onResize_() {
     // Get current browser dimensions, calc aspect ratio
     const w = window.innerWidth;
@@ -238,17 +253,49 @@ class App {
     this.#camera_.updateProjectionMatrix();
   }
 
-  // Our "tick" function
+  /**
+   *
+   * Our "tick" function
+   * - what we're doing every frame
+   * @param {*} elapsedTime
+   */
   #step_(elapsedTime) {
     this.#box_.rotation.y += this.#box_.customParams.rotFactor * elapsedTime;
+
+    this.#updateCharacterMovement_(elapsedTime);
   }
 
-  // Our "draw" function
+  #updateCharacterMovement_(elapsedTime) {
+    const MOVE_SPEED = 1;
+
+    // Retrieve InputManager actions
+    const actions = this.#inputs_.Actions;
+    const velocity = new THREE.Vector3();
+
+    if (actions.forward) {
+      velocity.z += MOVE_SPEED * elapsedTime;
+    } else if (actions.backward) {
+      velocity.z -= MOVE_SPEED * elapsedTime;
+    }
+
+    this.#box_.position.add(velocity);
+  }
+
+  /**
+   * Our render function
+   * - renders the scene
+   */
   #render_() {
     this.#three_.render(this.#scene_, this.#camera_);
   }
 
-  // Our raf loop to continuously draw
+  /**
+   * Our raf loop to continuously draw
+   * - "similar" to the p5.draw() function
+   * - we're having the `stats` panel monitor each frame, it "wraps" the actions
+   * - we're repeatedly calling `step` to continuously update something
+   * - we're repeatedly rendering the scene to keep it up to date
+   */
   #raf_() {
     requestAnimationFrame((t) => {
       this.#stats_.begin();
