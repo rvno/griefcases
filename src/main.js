@@ -15,7 +15,8 @@ class App {
 
   // Scene
   #sun_ = null;
-  #box_ = null;
+  #character_ = null;
+  #characterGroup_ = null;
 
   // Scene Controls
   #controls_ = null;
@@ -63,6 +64,7 @@ class App {
 
     this.#setupThree_();
     this.#setupBasicScene_();
+    this.#setupCharacter_();
 
     // Input Management
     this.#inputs_ = new InputManager();
@@ -181,66 +183,6 @@ class App {
       step: 0.01,
     });
 
-    // Add a box
-    const boxGeometry = new THREE.BoxGeometry(1, 1, 1);
-    const boxMaterial = new THREE.MeshStandardMaterial({
-      color: 0xff00f0,
-    });
-    this.#box_ = new THREE.Mesh(boxGeometry, boxMaterial);
-    this.#box_.castShadow = true;
-    this.#scene_.add(this.#box_);
-
-    // Create a box tweak pane folder
-    this.#box_.customParams = {
-      wireframe: false,
-      transparent: false,
-      opacity: 1,
-      color: this.#box_.material.color,
-      position: { x: 0, y: 0, z: 0 },
-      rotFactor: 0.2,
-    };
-    const boxFolder = this.#pane_.addFolder({ title: "Box" });
-    // NOTE: boolean params can just follow `addBinding(paramObject, paramProperty)`
-    boxFolder
-      .addBinding(this.#box_.customParams, "wireframe")
-      .on("change", (evt) => {
-        this.#box_.material.wireframe = evt.value;
-      });
-    // NOTE: transparent + opacity are tied together, must have transparent true for opacity to kick in
-    boxFolder
-      .addBinding(this.#box_.customParams, "transparent")
-      .on("change", (evt) => {
-        this.#box_.material.transparent = evt.value;
-        // make sure to update material after tweaking it
-        this.#box_.material.needsUpdate = true;
-      });
-    // NOTE: params with ranges can follow `addBinding(paramObject, paramProperty, {min: min, max: max, step: step})`
-    boxFolder
-      .addBinding(this.#box_.customParams, "opacity", { min: 0, max: 0 })
-      .on("change", (evt) => {
-        this.#box_.material.opacity = evt.value;
-      });
-    // NOTE: color param has a "view" object where you can set a colorpicker
-    //  - it looks like it matches the paramObject structure(r,g,b) in our case for THREE.Color
-    boxFolder
-      .addBinding(this.#box_.customParams, "color", {
-        view: "color",
-        color: { type: "float" },
-      })
-      .on("change", (evt) => {
-        this.#box_.material.color.set(evt.value);
-      });
-    boxFolder
-      .addBinding(this.#box_.customParams, "position")
-      .on("change", (evt) => {
-        this.#box_.position.set(evt.value.x, evt.value.y, evt.value.z);
-      });
-    boxFolder.addBinding(this.#box_.customParams, "rotFactor", {
-      min: 0,
-      max: 3,
-      step: 0.01,
-    });
-
     // Add ground mesh
     const groundGeometry = new THREE.PlaneGeometry(20, 20);
     const groundMaterial = new THREE.MeshStandardMaterial({
@@ -258,11 +200,128 @@ class App {
     this.#scene_.add(groundMesh);
   }
 
+  #setupCharacter_() {
+    const charGroup = new THREE.Group();
+
+    const charGeo = new THREE.CapsuleGeometry(0.5, 0.5, 10, 20);
+    const charMat = new THREE.MeshStandardMaterial({ color: 0x004343 });
+    const char = new THREE.Mesh(charGeo, charMat);
+    char.position.set(0, 0.4, 0);
+    char.castShadow = true;
+    char.receiveShadow = true;
+
+    // create character parts
+    const boxGeo = new THREE.BoxGeometry(0.1, 0.1, 0.1);
+    const boxMat1 = new THREE.MeshStandardMaterial({ color: 0xff8080 });
+    const boxMesh1 = new THREE.Mesh(boxGeo, boxMat1);
+    boxMesh1.position.set(0.75, 0.75, 0);
+    boxMesh1.castShadow = true;
+    boxMesh1.receiveShadow = true;
+
+    const boxMat2 = new THREE.MeshStandardMaterial({ color: 0x8080ff });
+    const boxMesh2 = new THREE.Mesh(boxGeo, boxMat2);
+    boxMesh2.position.set(-0.75, 0.75, 0);
+    boxMesh2.castShadow = true;
+    boxMesh2.receiveShadow = true;
+
+    const boxMat3 = new THREE.MeshStandardMaterial({ color: 0x80ff80 });
+    const boxMesh3 = new THREE.Mesh(boxGeo, boxMat3);
+    boxMesh3.position.set(0, 0.75, 0.75);
+    boxMesh3.castShadow = true;
+    boxMesh3.receiveShadow = true;
+
+    // Assemble character parts
+    charGroup.add(char);
+    charGroup.add(boxMesh1);
+    charGroup.add(boxMesh2);
+    charGroup.add(boxMesh3);
+
+    this.#character_ = char;
+    this.#characterGroup_ = charGroup;
+    this.#scene_.add(charGroup);
+
+    // Create a character tweak pane folder
+    this.#character_.customParams = {
+      wireframe: false,
+      transparent: false,
+      opacity: 1,
+      color: this.#character_.material.color,
+      position: { x: 0, y: 0.4, z: 0 },
+      rotFactor: 0.2,
+    };
+    let previousValues = {
+      position: { x: 0, y: 0.4, z: 0 },
+      rotFactor: 0.2,
+    };
+
+    const charFolder = this.#pane_.addFolder({ title: "Character" });
+    // NOTE: boolean params can just follow `addBinding(paramObject, paramProperty)`
+    charFolder
+      .addBinding(this.#character_.customParams, "wireframe")
+      .on("change", (evt) => {
+        this.#character_.material.wireframe = evt.value;
+      });
+    // NOTE: transparent + opacity are tied together, must have transparent true for opacity to kick in
+    charFolder
+      .addBinding(this.#character_.customParams, "transparent")
+      .on("change", (evt) => {
+        this.#character_.material.transparent = evt.value;
+        // make sure to update material after tweaking it
+        this.#character_.material.needsUpdate = true;
+      });
+    // NOTE: params with ranges can follow `addBinding(paramObject, paramProperty, {min: min, max: max, step: step})`
+    charFolder
+      .addBinding(this.#character_.customParams, "opacity", { min: 0, max: 0 })
+      .on("change", (evt) => {
+        this.#character_.material.opacity = evt.value;
+      });
+    // NOTE: color param has a "view" object where you can set a colorpicker
+    //  - it looks like it matches the paramObject structure(r,g,b) in our case for THREE.Color
+    charFolder
+      .addBinding(this.#character_.customParams, "color", {
+        view: "color",
+        color: { type: "float" },
+      })
+      .on("change", (evt) => {
+        this.#character_.material.color.set(evt.value);
+      });
+    charFolder
+      .addBinding(this.#character_.customParams, "position")
+      .on("change", (evt) => {
+        const currentValue = evt.value;
+        this.#character_.position.set(evt.value.x, evt.value.y, evt.value.z);
+
+        // Find the difference between previous and current position
+        const deltaVec = new THREE.Vector3().subVectors(
+          new THREE.Vector3().copy(currentValue),
+          new THREE.Vector3().copy(previousValues.position)
+        );
+
+        // Update additional parts position by adding the deltaVec
+        boxMesh1.position.add(deltaVec);
+        boxMesh2.position.add(deltaVec);
+        boxMesh3.position.add(deltaVec);
+
+        // Update previous position for next change
+        previousValues.position = { ...currentValue };
+      });
+    charFolder.addBinding(this.#character_.customParams, "rotFactor", {
+      min: 0,
+      max: 3,
+      step: 0.01,
+    });
+  }
+
+  /**
+   * Creates our `ThirdPersonCamera` instance
+   * - passes the pane so we can tweak it within the class itself
+   * @param {*} pane
+   */
   #setup3rdCamera_(pane) {
     this.#thirdCamera_ = new ThirdPersonCamera(
       new THREE.Vector3(0, 1, -3),
       new THREE.Vector3(0, 1, 5),
-      this.#box_,
+      this.#characterGroup_,
       this.#camera_,
       pane
     );
@@ -276,9 +335,6 @@ class App {
    * @param {*} elapsedTime
    */
   #step_(elapsedTime) {
-    // Animation - rotates the box along the y-axis
-    // this.#box_.rotation.y += this.#box_.customParams.rotFactor * elapsedTime;
-
     this.#updateCharacterMovement_(elapsedTime);
     this.#updateCamera_(elapsedTime);
     this.#updateSun_(elapsedTime);
@@ -312,13 +368,13 @@ class App {
     // Apply the proper rotation to the world space,
     // so that the character moves with the correct rotation
     // quaternion deals with the character's rotation
-    velocity.applyQuaternion(this.#box_.quaternion);
+    velocity.applyQuaternion(this.#characterGroup_.quaternion);
 
     // NOTE: Make sure to apply the quaternion (character's rotation) first
     // Moves the character forward/backward
-    this.#box_.position.add(velocity);
+    this.#characterGroup_.position.add(velocity);
     // Rotates the character in place left/right
-    this.#box_.rotateY(angle);
+    this.#characterGroup_.rotateY(angle);
   }
 
   /**
@@ -341,10 +397,10 @@ class App {
     this.#sun_.position.set(1, 2, 1);
 
     // HAPPY ACCIDENT - random shadow + darkening stretch
-    this.#sun_.position.add(this.#box_.position);
+    this.#sun_.position.add(this.#characterGroup_.position);
 
     // Set sun/light target to character's position
-    this.#sun_.target.position.copy(this.#box_.position);
+    this.#sun_.target.position.copy(this.#characterGroup_.position);
   }
 
   /**

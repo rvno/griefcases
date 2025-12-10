@@ -50,7 +50,6 @@ class InputManager {
 
     if (key) {
       this.#keys_[key] = bool;
-      console.log(this.#keys_[key]);
     }
   }
 
