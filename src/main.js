@@ -260,13 +260,15 @@ class App {
    * @param {*} elapsedTime
    */
   #step_(elapsedTime) {
-    this.#box_.rotation.y += this.#box_.customParams.rotFactor * elapsedTime;
+    // Animation - rotates the box along the y-axis
+    // this.#box_.rotation.y += this.#box_.customParams.rotFactor * elapsedTime;
 
     this.#updateCharacterMovement_(elapsedTime);
   }
 
   #updateCharacterMovement_(elapsedTime) {
     const MOVE_SPEED = 1;
+    let angle = 0;
 
     // Retrieve InputManager actions
     const actions = this.#inputs_.Actions;
@@ -278,7 +280,16 @@ class App {
       velocity.z -= MOVE_SPEED * elapsedTime;
     }
 
+    if (actions.left) {
+      angle += elapsedTime;
+    } else if (actions.right) {
+      angle -= elapsedTime;
+    }
+
+    // Moves the character forward/backward
     this.#box_.position.add(velocity);
+
+    this.#box_.rotateY(angle);
   }
 
   /**
