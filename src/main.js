@@ -337,6 +337,9 @@ class App {
     // arbitrary initial direction
     // this.#sun_.position.set(1,2,1)
 
+    // NOTE: without this, the light position keeps moving
+    this.#sun_.position.set(1, 2, 1);
+
     // HAPPY ACCIDENT - random shadow + darkening stretch
     this.#sun_.position.add(this.#box_.position);
 
