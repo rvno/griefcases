@@ -9,7 +9,7 @@ class ThirdPersonCamera {
   #currentLookAt_ = new THREE.Vector3();
 
   #options_ = {
-    cameraLerpFactor: 0.1,
+    cameraLerpFactor: 0.37,
     idealOffset_: new THREE.Vector3(),
     idealLookAt_: new THREE.Vector3(),
   };
@@ -47,6 +47,7 @@ class ThirdPersonCamera {
   #calculateIdealCameraPosition_() {
     // In our options, establish the start offset
     // For a "classic" 3rd person, start above (positive-y) and behind(neg-z)
+    // - ^ a note for tweaking the code in the options/params, not here
     const idealPosition = this.#options_.idealOffset_.clone();
 
     // Apply the target's quaternion and position to the ideal offset
@@ -63,10 +64,15 @@ class ThirdPersonCamera {
    * @returns idealLookAt position
    */
   #calculateIdealCameraLookAt_() {
-    // This looks directly at the target since we're using target position
-    const idealLookAt = this.#target_.position.clone();
+    // NOTE: This looks directly at the target since we're using target position
+    // const idealLookat = this.#target_.position.clone();
 
-    return idealLookAt;
+    // Update the cameraLookAt to point above + in front of the character
+    const idealLookat = this.#options_.idealLookAt_.clone();
+    idealLookat.applyQuaternion(this.#target_.quaternion);
+    idealLookat.add(this.#target_.position);
+
+    return idealLookat;
   }
 
   /**
@@ -78,9 +84,17 @@ class ThirdPersonCamera {
     const idealCameraPosition = this.#calculateIdealCameraPosition_();
     const idealCameraLookAt = this.#calculateIdealCameraLookAt_();
 
+    // NOTE: this is more of a "linear" follower
     // Interpolate towards ideal pos/LA from current pos/LA
-    this.#currentPosition_.copy(idealCameraPosition);
-    this.#currentLookAt_.copy(idealCameraLookAt);
+    // this.#currentPosition_.copy(idealCameraPosition);
+    // this.#currentLookAt_.copy(idealCameraLookAt);
+
+    // NOTE: this is a smoother follower w/ lerping
+    // - t effectively is our damping factor
+    const t = 1.0 - Math.pow(this.#options_.cameraLerpFactor, elapsedTime);
+
+    this.#currentPosition_.lerp(idealCameraPosition, t);
+    this.#currentLookAt_.lerp(idealCameraLookAt, t);
 
     // Update the actual(perspective) camera
     this.#camera_.position.copy(this.#currentPosition_);
