@@ -143,6 +143,45 @@ class App {
     boxMesh.castShadow = true;
     this.#scene_.add(boxMesh);
 
+    // Create a box tweak pane folder
+    const boxParams = {
+      wireframe: false,
+      transparent: false,
+      opacity: 1,
+      color: boxMesh.material.color,
+      position: { x: 0, y: 0, z: 0 },
+    };
+    const boxFolder = this.#pane_.addFolder({ title: "Box" });
+    // NOTE: boolean params can just follow `addBinding(paramObject, paramProperty)`
+    boxFolder.addBinding(boxParams, "wireframe").on("change", (evt) => {
+      boxMesh.material.wireframe = evt.value;
+    });
+    // NOTE: transparent + opacity are tied together, must have transparent true for opacity to kick in
+    boxFolder.addBinding(boxParams, "transparent").on("change", (evt) => {
+      boxMesh.material.transparent = evt.value;
+      // make sure to update material after tweaking it
+      boxMesh.material.needsUpdate = true;
+    });
+    // NOTE: params with ranges can follow `addBinding(paramObject, paramProperty, {min: min, max: max, step: step})`
+    boxFolder
+      .addBinding(boxParams, "opacity", { min: 0, max: 0 })
+      .on("change", (evt) => {
+        boxMesh.material.opacity = evt.value;
+      });
+    // NOTE: color param has a "view" object where you can set a colorpicker
+    //  - it looks like it matches the paramObject structure(r,g,b) in our case for THREE.Color
+    boxFolder
+      .addBinding(boxParams, "color", {
+        view: "color",
+        color: { type: "float" },
+      })
+      .on("change", (evt) => {
+        boxMesh.material.color.set(evt.value);
+      });
+    boxFolder.addBinding(boxParams, "position").on("change", (evt) => {
+      boxMesh.position.set(evt.value.x, evt.value.y, evt.value.z);
+    });
+
     // Add ground mesh
     const groundGeometry = new THREE.PlaneGeometry(20, 20);
     const groundMaterial = new THREE.MeshStandardMaterial({
