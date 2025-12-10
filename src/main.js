@@ -286,9 +286,15 @@ class App {
       angle -= elapsedTime;
     }
 
+    // Apply the proper rotation to the world space,
+    // so that the character moves with the correct rotation
+    // quaternion deals with the character's rotation
+    velocity.applyQuaternion(this.#box_.quaternion);
+
+    // NOTE: Make sure to apply the quaternion (character's rotation) first
     // Moves the character forward/backward
     this.#box_.position.add(velocity);
-
+    // Rotates the character in place left/right
     this.#box_.rotateY(angle);
   }
 
