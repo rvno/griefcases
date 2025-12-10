@@ -1,16 +1,21 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { Pane } from "tweakpane";
+import Stats from "three/addons/libs/Stats.module.js";
 
 class App {
+  // Three "setup"
   #three_ = null;
   #controls_ = null;
   #camera_ = null;
   #scene_ = null;
 
+  // Scene
   #sun_ = null;
 
+  // Debug & Performance
   #pane_ = null;
+  #stats_ = null;
 
   constructor() {}
 
@@ -36,15 +41,25 @@ class App {
    * Project setup
    * - calls setupThree for setup
    * - calls setupBasicScene to add to the scene
+   * - calls setupPane & Stats for debug/perf monitoring
    */
   async #setupProject_() {
-    this.#setupPane_();
     this.#setupThree_();
     this.#setupBasicScene_();
+
+    // Debug & Performance
+    this.#setupPane_();
+    this.#setupStats_();
   }
 
   #setupPane_() {
     this.#pane_ = new Pane();
+  }
+
+  #setupStats_() {
+    this.#stats_ = new Stats();
+    // @TODO: consider three-perf lib
+    document.body.appendChild(this.#stats_.dom);
   }
 
   /**
