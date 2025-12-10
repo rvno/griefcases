@@ -1,11 +1,16 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { Pane } from "tweakpane";
 
 class App {
   #three_ = null;
   #controls_ = null;
   #camera_ = null;
   #scene_ = null;
+
+  #sun_ = null;
+
+  #pane_ = null;
 
   constructor() {}
 
@@ -33,8 +38,13 @@ class App {
    * - calls setupBasicScene to add to the scene
    */
   async #setupProject_() {
+    this.#setupPane_();
     this.#setupThree_();
     this.#setupBasicScene_();
+  }
+
+  #setupPane_() {
+    this.#pane_ = new Pane();
   }
 
   /**
@@ -68,6 +78,12 @@ class App {
 
     this.#scene_ = new THREE.Scene();
     this.#scene_.background = new THREE.Color(0x000000);
+
+    // Enable Shadows
+    // - enabling shadow map gives us the shadow
+    this.#three_.shadowMap.enabled = true;
+    this.#three_.shadowMap.type = THREE.PCFSoftShadowMap;
+    this.#three_.toneMapping = THREE.ACESFilmicToneMapping;
   }
 
   /**
@@ -75,12 +91,58 @@ class App {
    * - adds a cube
    */
   #setupBasicScene_() {
+    // Setup Light
+    const light = new THREE.DirectionalLight(0xffffff, 2.0);
+    light.position.set(5, 20, 5);
+    light.target.position.set(0, 0, 0);
+    // Light shadow settings - makes the shadows crisper
+    light.castShadow = true;
+    light.shadow.mapSize.setScalar(1024);
+    light.shadow.camera.left = 2;
+    light.shadow.camera.right = -2;
+    light.shadow.camera.top = 2;
+    light.shadow.camera.bottom = -2;
+    // Add the light to the scene
+    this.#scene_.add(light);
+    this.#scene_.add(light.target);
+    this.#sun_ = light;
+
+    // Add a light tweak pane folder
+    const lightFolder = this.#pane_.addFolder({ title: "Sunlight" });
+    lightFolder.addBinding(this.#sun_, "color", {
+      view: "color",
+      color: { type: "float" },
+    });
+    lightFolder.addBinding(this.#sun_, "intensity", {
+      min: 0,
+      max: 5,
+      step: 0.01,
+    });
+
+    // Add a box
     const boxGeometry = new THREE.BoxGeometry(1, 1, 1);
-    const boxMaterial = new THREE.MeshBasicMaterial({
-      color: 0xff0000,
+    const boxMaterial = new THREE.MeshStandardMaterial({
+      color: 0xff00f0,
     });
     const boxMesh = new THREE.Mesh(boxGeometry, boxMaterial);
+    boxMesh.castShadow = true;
     this.#scene_.add(boxMesh);
+
+    // Add ground mesh
+    const groundGeometry = new THREE.PlaneGeometry(20, 20);
+    const groundMaterial = new THREE.MeshStandardMaterial({
+      color: 0xffffff,
+      metalness: 0.2,
+      roughness: 0.6,
+      side: THREE.DoubleSide,
+    });
+    const groundMesh = new THREE.Mesh(groundGeometry, groundMaterial);
+    // Position the mesh below the box
+    groundMesh.position.y = -0.5;
+    // Rotate the plane so it's horizontal
+    groundMesh.rotation.x = -Math.PI / 2;
+    groundMesh.receiveShadow = true;
+    this.#scene_.add(groundMesh);
   }
 
   #onResize_() {
