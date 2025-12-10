@@ -44,12 +44,12 @@ class App {
    * - calls setupPane & Stats for debug/perf monitoring
    */
   async #setupProject_() {
-    this.#setupThree_();
-    this.#setupBasicScene_();
-
     // Debug & Performance
     this.#setupPane_();
     this.#setupStats_();
+
+    this.#setupThree_();
+    this.#setupBasicScene_();
   }
 
   #setupPane_() {
@@ -188,7 +188,12 @@ class App {
   // Our raf loop to continuously draw
   #raf_() {
     requestAnimationFrame((t) => {
+      this.#stats_.begin();
+
       this.#render_();
+
+      this.#stats_.end();
+
       this.#raf_();
     });
   }
