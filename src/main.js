@@ -9,24 +9,37 @@ class App {
 
   constructor() {}
 
+  /**
+   * Starts the project
+   * - Runs setupProject
+   * - Starts the draw loop
+   */
   async initialize() {
+    window.addEventListener("resize", () => {
+      this.#onResize_();
+    });
+
     await this.#setupProject_();
+    // Call onResize to setup our initial dimensions
+    this.#onResize_();
+
+    // Start the draw loop
+    this.#raf_();
   }
 
   /**
    * Project setup
    * - calls setupThree for setup
    * - calls setupBasicScene to add to the scene
-   * - calls raf to start the draw loop
    */
   async #setupProject_() {
     this.#setupThree_();
     this.#setupBasicScene_();
-    this.#raf_();
   }
 
   /**
-   * Sets up three.
+   * Sets up three - since we repeat code in onResize,
+   *  there's more abstracted to that function.
    * - creates the renderer
    * - creates canvas from renderer using window dims
    * - establishes DPR and aspect ratio
@@ -34,18 +47,12 @@ class App {
    * - creates empty scene
    */
   #setupThree_() {
+    // Set up renderer
     this.#three_ = new THREE.WebGLRenderer({ antialias: true });
+    document.body.appendChild(this.#three_.domElement);
     const w = window.innerWidth;
     const h = window.innerHeight;
-    this.#three_.setSize(w, h);
-    document.body.appendChild(this.#three_.domElement);
-    const canvas = this.#three_.domElement;
-    canvas.style.width = w + "px";
-    canvas.style.height = h + "px";
-
     const aspect = w / h;
-    const dpr = window.devicePixelRatio;
-    this.#three_.setSize(w * dpr, h * dpr, false);
 
     // Set up camera
     const fov = 70;
@@ -53,7 +60,6 @@ class App {
     const far = 1000;
 
     this.#camera_ = new THREE.PerspectiveCamera(fov, aspect, near, far);
-    this.#camera_.updateProjectionMatrix();
     this.#camera_.position.set(2, 1, 2);
     this.#camera_.lookAt(new THREE.Vector3(0, 0, 0));
 
@@ -75,6 +81,26 @@ class App {
     });
     const boxMesh = new THREE.Mesh(boxGeometry, boxMaterial);
     this.#scene_.add(boxMesh);
+  }
+
+  #onResize_() {
+    // Get current browser dimensions, calc aspect ratio
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    const dpr = window.devicePixelRatio;
+    const aspect = w / h;
+
+    // Update canvas dimensions w/ DPR
+    const canvas = this.#three_.domElement;
+    canvas.style.width = w + "px";
+    canvas.style.height = h + "px";
+
+    // Update renderer size
+    this.#three_.setSize(w * dpr, h * dpr, false);
+
+    // Update camera
+    this.#camera_.aspect = aspect;
+    this.#camera_.updateProjectionMatrix();
   }
 
   // Our "draw" function
