@@ -38,6 +38,12 @@ class ThirdPersonCamera {
     cameraFolder.addBinding(this.#options_, "idealLookAt_");
   }
 
+  /**
+   * The function returns the position vector for the 3rd person camera
+   *  based off of the camera offset we define in options/params, and
+   *  the target's position + rotation (quat)
+   * @returns idealCameraPosition
+   */
   #calculateIdealCameraPosition_() {
     // In our options, establish the start offset
     // For a "classic" 3rd person, start above (positive-y) and behind(neg-z)
@@ -52,12 +58,21 @@ class ThirdPersonCamera {
     return idealPosition;
   }
 
+  /**
+   * The function returns the lookat pos vector based off the target
+   * @returns idealLookAt position
+   */
   #calculateIdealCameraLookAt_() {
+    // This looks directly at the target since we're using target position
     const idealLookAt = this.#target_.position.clone();
 
     return idealLookAt;
   }
 
+  /**
+   * Callback function to handle the frame by frame update logic
+   * @param {*} elapsedTime
+   */
   #updateCamera_(elapsedTime) {
     // Calculate ideal position/lookAt
     const idealCameraPosition = this.#calculateIdealCameraPosition_();
@@ -72,6 +87,10 @@ class ThirdPersonCamera {
     this.#camera_.lookAt(this.#currentLookAt_);
   }
 
+  /**
+   * Our 'tick' function for the camera to increment frame by frame
+   * @param {*} elapsedTime
+   */
   step(elapsedTime) {
     this.#updateCamera_(elapsedTime);
   }

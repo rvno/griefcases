@@ -272,6 +272,7 @@ class App {
    *
    * Our "tick" function
    * - what we're doing every frame
+   * - we're essentially invoking other functions that handle the logic for different respective elements
    * @param {*} elapsedTime
    */
   #step_(elapsedTime) {
@@ -282,6 +283,11 @@ class App {
     this.#updateCamera_(elapsedTime);
   }
 
+  /**
+   * Utilizes InputManager to update/handle the character movement logic
+   * - utilized within the `step` function
+   * @param {*} elapsedTime
+   */
   #updateCharacterMovement_(elapsedTime) {
     const MOVE_SPEED = 1;
     let angle = 0;
