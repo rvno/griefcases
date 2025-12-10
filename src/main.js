@@ -4,6 +4,7 @@ import { Pane } from "tweakpane";
 import Stats from "three/addons/libs/Stats.module.js";
 
 import { InputManager } from "./input-manager.js";
+import { ThirdPersonCamera } from "./third-person-camera.js";
 
 class App {
   // Three "setup"
@@ -19,6 +20,7 @@ class App {
   // Scene Controls
   #controls_ = null;
   #inputs_ = null;
+  #thirdCamera_ = null;
 
   // Debug & Performance
   #pane_ = null;
@@ -65,6 +67,9 @@ class App {
     // Input Management
     this.#inputs_ = new InputManager();
     this.#inputs_.initialize();
+
+    // 3rd Person Camera
+    this.#setup3rdCamera_(this.#pane_);
   }
 
   #setupPane_() {
@@ -100,7 +105,7 @@ class App {
     const far = 1000;
 
     this.#camera_ = new THREE.PerspectiveCamera(fov, aspect, near, far);
-    this.#camera_.position.set(2, 1, 2);
+    this.#camera_.position.set(3, 2, 3);
     this.#camera_.lookAt(new THREE.Vector3(0, 0, 0));
 
     // Sets up orbit controls
@@ -114,6 +119,31 @@ class App {
     this.#three_.shadowMap.enabled = true;
     this.#three_.shadowMap.type = THREE.PCFSoftShadowMap;
     this.#three_.toneMapping = THREE.ACESFilmicToneMapping;
+  }
+
+  /**
+   * Handles resize event
+   * - recalculates the window dimensions and updates the canvas
+   * - then updates the camera based on the new aspect ratio
+   */
+  #onResize_() {
+    // Get current browser dimensions, calc aspect ratio
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    const dpr = window.devicePixelRatio;
+    const aspect = w / h;
+
+    // Update canvas dimensions w/ DPR
+    const canvas = this.#three_.domElement;
+    canvas.style.width = w + "px";
+    canvas.style.height = h + "px";
+
+    // Update renderer size
+    this.#three_.setSize(w * dpr, h * dpr, false);
+
+    // Update camera
+    this.#camera_.aspect = aspect;
+    this.#camera_.updateProjectionMatrix();
   }
 
   /**
@@ -228,29 +258,14 @@ class App {
     this.#scene_.add(groundMesh);
   }
 
-  /**
-   * Handles resize event
-   * - recalculates the window dimensions and updates the canvas
-   * - then updates the camera based on the new aspect ratio
-   */
-  #onResize_() {
-    // Get current browser dimensions, calc aspect ratio
-    const w = window.innerWidth;
-    const h = window.innerHeight;
-    const dpr = window.devicePixelRatio;
-    const aspect = w / h;
-
-    // Update canvas dimensions w/ DPR
-    const canvas = this.#three_.domElement;
-    canvas.style.width = w + "px";
-    canvas.style.height = h + "px";
-
-    // Update renderer size
-    this.#three_.setSize(w * dpr, h * dpr, false);
-
-    // Update camera
-    this.#camera_.aspect = aspect;
-    this.#camera_.updateProjectionMatrix();
+  #setup3rdCamera_(pane) {
+    this.#thirdCamera_ = new ThirdPersonCamera(
+      new THREE.Vector3(0, 1, -3),
+      new THREE.Vector3(0, 1, 5),
+      this.#box_,
+      this.#camera_,
+      pane
+    );
   }
 
   /**
@@ -264,6 +279,7 @@ class App {
     // this.#box_.rotation.y += this.#box_.customParams.rotFactor * elapsedTime;
 
     this.#updateCharacterMovement_(elapsedTime);
+    this.#updateCamera_(elapsedTime);
   }
 
   #updateCharacterMovement_(elapsedTime) {
@@ -299,6 +315,17 @@ class App {
   }
 
   /**
+   * Update camera function
+   * - utilizies the `step` function from the `ThirdPersonCamera` class
+   * - that function, like our step function, is a "tick" function,
+   * - so we call it within our `App` `step` function
+   * @param {*} elapsedTime
+   */
+  #updateCamera_(elapsedTime) {
+    this.#thirdCamera_.step(elapsedTime);
+  }
+
+  /**
    * Our render function
    * - renders the scene
    */
@@ -317,9 +344,10 @@ class App {
     requestAnimationFrame((t) => {
       this.#stats_.begin();
 
+      const elapsedTime = this.#clock_.getDelta();
       // Updates within the draw cycle
       // Note: we pass the delta time from the THREE clock as our elapsedTime value
-      this.#step_(this.#clock_.getDelta());
+      this.#step_(elapsedTime);
       this.#render_();
 
       this.#stats_.end();
