@@ -9,6 +9,7 @@
 ## 12-07-25
 
 - Created image mask component with dual-layer masking system
+
   - Component consists of two layers: an overlay image and a masked background
   - Overlay layer (`.image-mask__overlay`) displays at full opacity with the mask PNG (Nala-test.png)
   - Masked background layer (`.image-mask__masked-bg`) uses CSS `mask-image` to clip content through the mask shape
@@ -18,3 +19,8 @@
   - Set `pointer-events: none` on both layers to allow click-through to underlying content (iframes, videos)
   - Wildcard selector ensures all children of masked-bg fill 100% width/height
   - Result: Layered masking effect where overlay provides shape definition while masked layer adds blended visual interest
+
+  ## 12-09-24
+
+  - Setup threejs scene
+  - basic light, stats, tweakpane, and box mesh

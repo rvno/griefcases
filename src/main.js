@@ -113,10 +113,12 @@ class App {
     // Light shadow settings - makes the shadows crisper
     light.castShadow = true;
     light.shadow.mapSize.setScalar(1024);
+    // NOTE: just an observation - examples seem to use the same base value for light, with appropriate +/- factor
     light.shadow.camera.left = 2;
     light.shadow.camera.right = -2;
     light.shadow.camera.top = 2;
     light.shadow.camera.bottom = -2;
+    light.shadow.mapSize.set(2048, 2048);
     // Add the light to the scene
     this.#scene_.add(light);
     this.#scene_.add(light.target);
