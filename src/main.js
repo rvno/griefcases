@@ -9,9 +9,11 @@ class App {
   #controls_ = null;
   #camera_ = null;
   #scene_ = null;
+  #clock_ = null;
 
   // Scene
   #sun_ = null;
+  #box_ = null;
 
   // Debug & Performance
   #pane_ = null;
@@ -25,6 +27,9 @@ class App {
    * - Starts the draw loop
    */
   async initialize() {
+    // clock param -> autostart
+    this.#clock_ = new THREE.Clock(true);
+
     window.addEventListener("resize", () => {
       this.#onResize_();
     });
@@ -141,47 +146,59 @@ class App {
     const boxMaterial = new THREE.MeshStandardMaterial({
       color: 0xff00f0,
     });
-    const boxMesh = new THREE.Mesh(boxGeometry, boxMaterial);
-    boxMesh.castShadow = true;
-    this.#scene_.add(boxMesh);
+    this.#box_ = new THREE.Mesh(boxGeometry, boxMaterial);
+    this.#box_.castShadow = true;
+    this.#scene_.add(this.#box_);
 
     // Create a box tweak pane folder
-    const boxParams = {
+    this.#box_.customParams = {
       wireframe: false,
       transparent: false,
       opacity: 1,
-      color: boxMesh.material.color,
+      color: this.#box_.material.color,
       position: { x: 0, y: 0, z: 0 },
+      rotFactor: 0.2,
     };
     const boxFolder = this.#pane_.addFolder({ title: "Box" });
     // NOTE: boolean params can just follow `addBinding(paramObject, paramProperty)`
-    boxFolder.addBinding(boxParams, "wireframe").on("change", (evt) => {
-      boxMesh.material.wireframe = evt.value;
-    });
+    boxFolder
+      .addBinding(this.#box_.customParams, "wireframe")
+      .on("change", (evt) => {
+        this.#box_.material.wireframe = evt.value;
+      });
     // NOTE: transparent + opacity are tied together, must have transparent true for opacity to kick in
-    boxFolder.addBinding(boxParams, "transparent").on("change", (evt) => {
-      boxMesh.material.transparent = evt.value;
-      // make sure to update material after tweaking it
-      boxMesh.material.needsUpdate = true;
-    });
+    boxFolder
+      .addBinding(this.#box_.customParams, "transparent")
+      .on("change", (evt) => {
+        this.#box_.material.transparent = evt.value;
+        // make sure to update material after tweaking it
+        this.#box_.material.needsUpdate = true;
+      });
     // NOTE: params with ranges can follow `addBinding(paramObject, paramProperty, {min: min, max: max, step: step})`
     boxFolder
-      .addBinding(boxParams, "opacity", { min: 0, max: 0 })
+      .addBinding(this.#box_.customParams, "opacity", { min: 0, max: 0 })
       .on("change", (evt) => {
-        boxMesh.material.opacity = evt.value;
+        this.#box_.material.opacity = evt.value;
       });
     // NOTE: color param has a "view" object where you can set a colorpicker
     //  - it looks like it matches the paramObject structure(r,g,b) in our case for THREE.Color
     boxFolder
-      .addBinding(boxParams, "color", {
+      .addBinding(this.#box_.customParams, "color", {
         view: "color",
         color: { type: "float" },
       })
       .on("change", (evt) => {
-        boxMesh.material.color.set(evt.value);
+        this.#box_.material.color.set(evt.value);
       });
-    boxFolder.addBinding(boxParams, "position").on("change", (evt) => {
-      boxMesh.position.set(evt.value.x, evt.value.y, evt.value.z);
+    boxFolder
+      .addBinding(this.#box_.customParams, "position")
+      .on("change", (evt) => {
+        this.#box_.position.set(evt.value.x, evt.value.y, evt.value.z);
+      });
+    boxFolder.addBinding(this.#box_.customParams, "rotFactor", {
+      min: 0,
+      max: 3,
+      step: 0.01,
     });
 
     // Add ground mesh
@@ -221,6 +238,11 @@ class App {
     this.#camera_.updateProjectionMatrix();
   }
 
+  // Our "tick" function
+  #step_(elapsedTime) {
+    this.#box_.rotation.y += this.#box_.customParams.rotFactor * elapsedTime;
+  }
+
   // Our "draw" function
   #render_() {
     this.#three_.render(this.#scene_, this.#camera_);
@@ -231,6 +253,9 @@ class App {
     requestAnimationFrame((t) => {
       this.#stats_.begin();
 
+      // Updates within the draw cycle
+      // Note: we pass the delta time from the THREE clock as our elapsedTime value
+      this.#step_(this.#clock_.getDelta());
       this.#render_();
 
       this.#stats_.end();
