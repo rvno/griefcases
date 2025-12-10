@@ -281,6 +281,7 @@ class App {
 
     this.#updateCharacterMovement_(elapsedTime);
     this.#updateCamera_(elapsedTime);
+    this.#updateSun_(elapsedTime);
   }
 
   /**
@@ -329,6 +330,18 @@ class App {
    */
   #updateCamera_(elapsedTime) {
     this.#thirdCamera_.step(elapsedTime);
+  }
+
+  #updateSun_(elapsedTime) {
+    // Follow the character around with the light
+    // arbitrary initial direction
+    // this.#sun_.position.set(1,2,1)
+
+    // HAPPY ACCIDENT - random shadow + darkening stretch
+    this.#sun_.position.add(this.#box_.position);
+
+    // Set sun/light target to character's position
+    this.#sun_.target.position.copy(this.#box_.position);
   }
 
   /**
