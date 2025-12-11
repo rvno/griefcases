@@ -316,7 +316,8 @@ class App {
       }
     });
     // @TODO: need to adjust model pivot point in Blender
-    giraffe.scene.position.set(0, -1.5, 0);
+    giraffe.scene.scale.setScalar(0.5);
+    giraffe.scene.position.set(0, -1, 0);
 
     // capsule character placeholder mesh
     // const charGeo = new THREE.CapsuleGeometry(0.5, 0.5, 10, 20);
