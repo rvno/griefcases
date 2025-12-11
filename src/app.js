@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { Pane } from "tweakpane";
-import Stats from "three/addons/libs/Stats.module.js";
+import Stats from "stats-gl";
 
 // for environments
 import { HDRLoader } from "three/addons/loaders/HDRLoader.js";
@@ -211,15 +211,13 @@ class App {
    */
   #raf_() {
     requestAnimationFrame((t) => {
-      this.#stats_.begin();
-
       const elapsedTime = this.#clock_.getDelta();
       // Updates within the draw cycle
       // Note: we pass the delta time from the THREE clock as our elapsedTime value
       this.#step_(elapsedTime);
       this.#render_();
 
-      this.#stats_.end();
+      this.#stats_.update();
 
       this.#raf_();
     });
