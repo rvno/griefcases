@@ -1,8 +1,10 @@
-import * as THREE from 'three';
+/**
+ * Credit goes to simondev for the bloomPass.js source code
+ */
+import * as THREE from "three";
 
-import { Pass, FullScreenQuad } from 'three/addons/postprocessing/Pass.js';
-import { CopyShader } from 'three/addons/shaders/CopyShader.js';
-
+import { Pass, FullScreenQuad } from "three/addons/postprocessing/Pass.js";
+import { CopyShader } from "three/addons/shaders/CopyShader.js";
 
 const VSH_GENERIC = `
 
@@ -13,7 +15,6 @@ void main() {
   vUvs = uv;
 }
 `;
-
 
 const FSH_DOWNSAMPLE_ = `
 
@@ -184,7 +185,6 @@ const COMPOSITE_SHADER = {
   fragmentShader: COMPOSITE_FSH_,
 };
 
-
 class BloomPassOptions {
   constructor() {
     this.render = {
@@ -203,10 +203,9 @@ class BloomPassOptions {
       levels: 4,
     };
   }
-};
+}
 
 class BloomPass extends Pass {
-
   #quad_ = null;
   #passes_ = {};
   #targets_ = {};
@@ -216,7 +215,8 @@ class BloomPass extends Pass {
     super();
 
     this.needsSwap = false;
-    this.#settings_ = (options instanceof BloomPassOptions) ? options : new BloomPassOptions();
+    this.#settings_ =
+      options instanceof BloomPassOptions ? options : new BloomPassOptions();
 
     this.#quad_ = new FullScreenQuad(null);
 
@@ -250,22 +250,28 @@ class BloomPass extends Pass {
 
     // TODO: Make this better
     for (let i = 0; i <= this.#settings_.setup.levels; i++) {
-      this.#createRenderTarget_('unity-downsample-' + i, 1.0 / (2 ** i), bufferParams);
-      this.#createRenderTarget_('unity-upsample-' + i, 1.0 / (2 ** i), bufferParams);
+      this.#createRenderTarget_(
+        "unity-downsample-" + i,
+        1.0 / 2 ** i,
+        bufferParams
+      );
+      this.#createRenderTarget_(
+        "unity-upsample-" + i,
+        1.0 / 2 ** i,
+        bufferParams
+      );
     }
   }
 
   #createPasses_() {
-    this.#createPass_('copy-texture', CopyShader);
-    this.#createPass_('unity-downsample', DOWNSAMPLE_SHADER);
-    this.#createPass_('unity-upsample', UPSAMPLE_SHADER);
-    this.#createPass_('unity-composite', COMPOSITE_SHADER);
+    this.#createPass_("copy-texture", CopyShader);
+    this.#createPass_("unity-downsample", DOWNSAMPLE_SHADER);
+    this.#createPass_("unity-upsample", UPSAMPLE_SHADER);
+    this.#createPass_("unity-composite", COMPOSITE_SHADER);
   }
 
   #createPass_(name, shaderData) {
-    const material = new THREE.ShaderMaterial(
-      shaderData
-    );
+    const material = new THREE.ShaderMaterial(shaderData);
 
     this.#passes_[name] = material;
   }
@@ -286,21 +292,40 @@ class BloomPass extends Pass {
     } else {
       const lightness = brightness - 1.0;
       bm.compose(
-        new THREE.Vector3(lightness, lightness, lightness), IQ_, new THREE.Vector3(1, 1, 1));
+        new THREE.Vector3(lightness, lightness, lightness),
+        IQ_,
+        new THREE.Vector3(1, 1, 1)
+      );
     }
 
     const c1 = contrast;
     const c2 = (1 - c1) * 0.5;
     const cm = new THREE.Matrix4().compose(
-        new THREE.Vector3(c2, c2, c2), IQ_, new THREE.Vector3(c1, c1, c1));
+      new THREE.Vector3(c2, c2, c2),
+      IQ_,
+      new THREE.Vector3(c1, c1, c1)
+    );
 
     const colourWeights = new THREE.Vector3(0.2126, 0.7152, 0.0722);
     const s = saturation;
     const sm = new THREE.Matrix4(
-        s + (1 - s) * colourWeights.x, (1 - s) * colourWeights.y, (1 - s) * colourWeights.z, 0,
-        (1 - s) * colourWeights.x, s + (1 - s) * colourWeights.y, (1 - s) * colourWeights.z, 0,
-        (1 - s) * colourWeights.x, (1 - s) * colourWeights.y, s + (1 - s) * colourWeights.z, 0,
-        0, 0, 0, 1);
+      s + (1 - s) * colourWeights.x,
+      (1 - s) * colourWeights.y,
+      (1 - s) * colourWeights.z,
+      0,
+      (1 - s) * colourWeights.x,
+      s + (1 - s) * colourWeights.y,
+      (1 - s) * colourWeights.z,
+      0,
+      (1 - s) * colourWeights.x,
+      (1 - s) * colourWeights.y,
+      s + (1 - s) * colourWeights.z,
+      0,
+      0,
+      0,
+      0,
+      1
+    );
 
     const result = bm;
     result.multiply(cm);
@@ -314,19 +339,23 @@ class BloomPass extends Pass {
     // this.threejs_.render(this.scene_, this.camera_);
     // this.threejs_.setRenderTarget(null);
 
-    this.#passes_['copy-texture'].uniforms.tDiffuse.value = readBuffer.texture;
-    this.#passes_['copy-texture'].needsUpdate = true;
-    this.#renderPass_('copy-texture', renderer, writeBuffer);
+    this.#passes_["copy-texture"].uniforms.tDiffuse.value = readBuffer.texture;
+    this.#passes_["copy-texture"].needsUpdate = true;
+    this.#renderPass_("copy-texture", renderer, writeBuffer);
 
     // TODO: Extra copy is unnecessary
-    this.#passes_['copy-texture'].uniforms.tDiffuse.value = readBuffer.texture;
-    this.#passes_['copy-texture'].needsUpdate = true;
-    this.#renderPass_('copy-texture', renderer, this.#targets_['unity-downsample-0'].buffer);
+    this.#passes_["copy-texture"].uniforms.tDiffuse.value = readBuffer.texture;
+    this.#passes_["copy-texture"].needsUpdate = true;
+    this.#renderPass_(
+      "copy-texture",
+      renderer,
+      this.#targets_["unity-downsample-0"].buffer
+    );
 
     // TODO: This is lazy
     for (let i = 0; i < this.#settings_.setup.levels; i++) {
-      const srcName = 'unity-downsample-' + i;
-      const dstName = 'unity-downsample-' + (i+1);
+      const srcName = "unity-downsample-" + i;
+      const dstName = "unity-downsample-" + (i + 1);
       if (!(dstName in this.#targets_)) {
         break;
       }
@@ -334,68 +363,83 @@ class BloomPass extends Pass {
       const src = this.#targets_[srcName].buffer;
       const dst = this.#targets_[dstName].buffer;
 
-      this.#passes_['unity-downsample'].uniforms.frameTexture.value = src.texture;
-      this.#passes_['unity-downsample'].uniforms.useKaris.value = (i == 0);
-      this.#passes_['unity-downsample'].uniforms.radius.value = this.#settings_.render.downRadius;
-      this.#passes_['unity-downsample'].uniforms.resolution.value = new THREE.Vector2(src.width, src.height);
+      this.#passes_["unity-downsample"].uniforms.frameTexture.value =
+        src.texture;
+      this.#passes_["unity-downsample"].uniforms.useKaris.value = i == 0;
+      this.#passes_["unity-downsample"].uniforms.radius.value =
+        this.#settings_.render.downRadius;
+      this.#passes_["unity-downsample"].uniforms.resolution.value =
+        new THREE.Vector2(src.width, src.height);
 
       if (i == 0) {
-        this.#passes_['unity-downsample'].uniforms.colourMatrix.value = this.#buildColourMatrix_(
-          this.#settings_.render.contrast,
-          this.#settings_.render.brightness,
-          this.#settings_.render.saturation
-        );
+        this.#passes_["unity-downsample"].uniforms.colourMatrix.value =
+          this.#buildColourMatrix_(
+            this.#settings_.render.contrast,
+            this.#settings_.render.brightness,
+            this.#settings_.render.saturation
+          );
       } else {
-        this.#passes_['unity-downsample'].uniforms.colourMatrix.value = new THREE.Matrix4();
+        this.#passes_["unity-downsample"].uniforms.colourMatrix.value =
+          new THREE.Matrix4();
       }
 
-      this.#passes_['unity-downsample'].needsUpdate = true;
-      this.#renderPass_('unity-downsample', renderer, dst);
+      this.#passes_["unity-downsample"].needsUpdate = true;
+      this.#renderPass_("unity-downsample", renderer, dst);
     }
 
     // Upsample
     // TODO: Stupid, be better
-    const finalDownsample = 'unity-downsample-' + this.#settings_.setup.levels;
-    const finalUpsample = 'unity-upsample-' + this.#settings_.setup.levels;
-    this.#passes_['copy-texture'].uniforms.tDiffuse.value = this.#targets_[finalDownsample].buffer.texture;
-    this.#passes_['copy-texture'].needsUpdate = true;
-    this.#renderPass_('copy-texture', renderer, this.#targets_[finalUpsample].buffer);
+    const finalDownsample = "unity-downsample-" + this.#settings_.setup.levels;
+    const finalUpsample = "unity-upsample-" + this.#settings_.setup.levels;
+    this.#passes_["copy-texture"].uniforms.tDiffuse.value =
+      this.#targets_[finalDownsample].buffer.texture;
+    this.#passes_["copy-texture"].needsUpdate = true;
+    this.#renderPass_(
+      "copy-texture",
+      renderer,
+      this.#targets_[finalUpsample].buffer
+    );
 
     for (let i = this.#settings_.setup.levels; i >= 0; i--) {
-      const srcName = 'unity-upsample-' + (i+1);
-      const dstName = 'unity-upsample-' + i;
+      const srcName = "unity-upsample-" + (i + 1);
+      const dstName = "unity-upsample-" + i;
       if (!(srcName in this.#targets_)) {
         continue;
       }
 
       const src = this.#targets_[srcName].buffer;
-      const srcMip = this.#targets_['unity-downsample-' + (i+1)].buffer;
+      const srcMip = this.#targets_["unity-downsample-" + (i + 1)].buffer;
       const dst = this.#targets_[dstName].buffer;
 
-      this.#passes_['unity-upsample'].uniforms.frameTexture.value = src.texture;
-      this.#passes_['unity-upsample'].uniforms.mipTexture.value = srcMip.texture;
-      this.#passes_['unity-upsample'].uniforms.radius.value = this.#settings_.render.upRadius;
-      this.#passes_['unity-upsample'].uniforms.resolution.value = new THREE.Vector2(src.width, src.height);
-      this.#passes_['unity-upsample'].needsUpdate = true;
+      this.#passes_["unity-upsample"].uniforms.frameTexture.value = src.texture;
+      this.#passes_["unity-upsample"].uniforms.mipTexture.value =
+        srcMip.texture;
+      this.#passes_["unity-upsample"].uniforms.radius.value =
+        this.#settings_.render.upRadius;
+      this.#passes_["unity-upsample"].uniforms.resolution.value =
+        new THREE.Vector2(src.width, src.height);
+      this.#passes_["unity-upsample"].needsUpdate = true;
 
-      this.#renderPass_('unity-upsample', renderer, dst);
+      this.#renderPass_("unity-upsample", renderer, dst);
     }
-
 
     // this.#passes_['copy-texture'].uniforms.tDiffuse.value = this.#targets_['unity-upsample-0'].buffer.texture;
     // this.#passes_['copy-texture'].needsUpdate = true;
     // this.#renderPass_('copy-texture', renderer, writeBuffer);
     // this.needsSwap = true;
 
-    this.#passes_['unity-composite'].uniforms.frameTexture.value = readBuffer.texture;
-    this.#passes_['unity-composite'].uniforms.bloomTexture.value = this.#targets_['unity-upsample-1'].buffer.texture;
-    this.#passes_['unity-composite'].uniforms.bloomStrength.value = this.#settings_.composite.strength;
-    this.#passes_['unity-composite'].uniforms.bloomMix.value = this.#settings_.composite.mixFactor;
-    this.#passes_['unity-composite'].needsUpdate = true;
-    this.#renderPass_('unity-composite', renderer, writeBuffer);
+    this.#passes_["unity-composite"].uniforms.frameTexture.value =
+      readBuffer.texture;
+    this.#passes_["unity-composite"].uniforms.bloomTexture.value =
+      this.#targets_["unity-upsample-1"].buffer.texture;
+    this.#passes_["unity-composite"].uniforms.bloomStrength.value =
+      this.#settings_.composite.strength;
+    this.#passes_["unity-composite"].uniforms.bloomMix.value =
+      this.#settings_.composite.mixFactor;
+    this.#passes_["unity-composite"].needsUpdate = true;
+    this.#renderPass_("unity-composite", renderer, writeBuffer);
 
     this.needsSwap = true;
-
 
     // this.#passes_['copy-texture'].uniforms.tDiffuse.value = this.#targets_['unity-upsample-1'].buffer.texture;
     // this.#passes_['copy-texture'].needsUpdate = true;
@@ -406,22 +450,25 @@ class BloomPass extends Pass {
   setSize(width, height) {
     for (let k in this.#targets_) {
       this.#targets_[k].buffer.setSize(
-          Math.ceil(width * this.#targets_[k].scale),
-          Math.ceil(height * this.#targets_[k].scale));
+        Math.ceil(width * this.#targets_[k].scale),
+        Math.ceil(height * this.#targets_[k].scale)
+      );
     }
 
     for (let k in this.#passes_) {
       if (!this.#passes_[k].uniforms.resolution) {
         continue;
       }
-      this.#passes_[k].uniforms.resolution.value = new THREE.Vector2(width, height);
+      this.#passes_[k].uniforms.resolution.value = new THREE.Vector2(
+        width,
+        height
+      );
     }
   }
 
   dispose() {
     this.#quad_.dispose();
   }
-
 }
 
 export { BloomPass };

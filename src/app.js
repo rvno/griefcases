@@ -103,6 +103,7 @@ class App {
     // Set up renderer
     this.#three_ = new THREE.WebGLRenderer({ antialias: true });
     document.body.appendChild(this.#three_.domElement);
+    this.#three_.domElement.setAttribute("id", "three");
     const w = window.innerWidth;
     const h = window.innerHeight;
     const aspect = w / h;
