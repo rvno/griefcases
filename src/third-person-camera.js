@@ -9,7 +9,7 @@ class ThirdPersonCamera {
   #currentLookAt_ = new THREE.Vector3();
 
   #options_ = {
-    cameraLerpFactor: 0.37,
+    cameraLerpFactor: 0.08,
     idealOffset_: new THREE.Vector3(),
     idealLookAt_: new THREE.Vector3(),
   };
