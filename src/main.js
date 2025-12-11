@@ -6,7 +6,11 @@ import Stats from "three/addons/libs/Stats.module.js";
 import { InputManager } from "./input-manager.js";
 import { ThirdPersonCamera } from "./third-person-camera.js";
 
-import { RGBELoader } from "three/addons/loaders/RGBELoader.js";
+// for environments
+import { HDRLoader } from "three/addons/loaders/HDRLoader.js";
+// for models
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js";
 
 class App {
   // Three "setup"
@@ -67,7 +71,7 @@ class App {
 
     this.#setupThree_();
     this.#setupBasicScene_();
-    this.#setupCharacter_();
+    await this.#setupCharacter_();
 
     // Input Management
     this.#inputs_ = new InputManager();
@@ -219,7 +223,7 @@ class App {
         },
       })
       .on("change", (evt) => {
-        this.#LoadRGBE_(`./skybox/${evt.value}`);
+        this.#LoadHDR_(`./skybox/${evt.value}`);
       });
     bgFolder.addBinding(this.#scene_, "backgroundBlurriness", {
       min: 0,
@@ -237,11 +241,11 @@ class App {
       step: 0.01,
     });
 
-    this.#LoadRGBE_(`./skybox/${this.#environment_.customParams.hdrTexture}`);
+    this.#LoadHDR_(`./skybox/${this.#environment_.customParams.hdrTexture}`);
   }
 
-  #LoadRGBE_(path) {
-    const rgbeLoader = new RGBELoader();
+  #LoadHDR_(path) {
+    const rgbeLoader = new HDRLoader();
     rgbeLoader.load(path, (hdrTexture) => {
       hdrTexture.mapping = THREE.EquirectangularReflectionMapping;
 
@@ -250,15 +254,77 @@ class App {
     });
   }
 
-  #setupCharacter_() {
+  /**
+   *
+   * LoadGLB loads our GLB models async
+   * NOTE: because of this, we need to use await accordingly
+   *  and functions with await must have async
+   *  reminder that async functions are called with await in general
+   * @param {*} path
+   * @returns promise resolution
+   */
+  async #LoadGLB_(path) {
+    const loader = new GLTFLoader();
+    const dracoLoader = new DRACOLoader();
+    dracoLoader.setDecoderPath("./libs/draco/");
+    loader.setDRACOLoader(dracoLoader);
+
+    return new Promise((resolve, reject) => {
+      loader.load(path, (gltf) => {
+        resolve(gltf);
+        console.log("done");
+      });
+    });
+
+    // loader.load(
+    //   path,
+    //   (gltf) => {
+    //     console.log("Model loaded:", path);
+    //     console.log("Model scene:", gltf.scene);
+    //     gltf.scene.traverse((c) => {
+    //       if (c instanceof THREE.Mesh) {
+    //         c.castShadow = true;
+    //         c.receiveShadow = true;
+    //       }
+    //     });
+    //     // this.#scene_.add(gltf.scene);
+    //     model = gltf.scene;
+    //     console.log(`Model ${path} added to scene`);
+    //     return model;
+    //   },
+    //   (progress) => {
+    //     console.log(
+    //       "Loading progress:",
+    //       (progress.loaded / progress.total) * 100 + "%"
+    //     );
+    //   },
+    //   (error) => {
+    //     console.error("Error loading model:", error);
+    //   }
+    // );
+  }
+
+  async #setupCharacter_() {
     const charGroup = new THREE.Group();
 
-    const charGeo = new THREE.CapsuleGeometry(0.5, 0.5, 10, 20);
-    const charMat = new THREE.MeshStandardMaterial({ color: 0x004343 });
-    const char = new THREE.Mesh(charGeo, charMat);
-    char.position.set(0, 0.4, 0);
-    char.castShadow = true;
-    char.receiveShadow = true;
+    const giraffe = await this.#LoadGLB_("./models/giraffe.glb");
+    giraffe.scene.traverse((c) => {
+      if (c.isMesh) {
+        c.castShadow = true;
+        c.receiveShadow = true;
+        c.shadowSide = THREE.DoubleSide;
+      }
+    });
+    // @TODO: need to adjust model pivot point in Blender
+    giraffe.scene.position.set(0, -1.5, 0);
+
+    // capsule character placeholder mesh
+    // const charGeo = new THREE.CapsuleGeometry(0.5, 0.5, 10, 20);
+    // const charMat = new THREE.MeshStandardMaterial({ color: 0x004343 });
+    // const char = new THREE.Mesh(charGeo, charMat);
+    // char.position.set(0, 0.4, 0);
+    // char.castShadow = true;
+    // char.receiveShadow = true;
 
     // create character parts
     const boxGeo = new THREE.BoxGeometry(0.1, 0.1, 0.1);
@@ -281,12 +347,13 @@ class App {
     boxMesh3.receiveShadow = true;
 
     // Assemble character parts
-    charGroup.add(char);
+    // charGroup.add(char);
+    charGroup.add(giraffe.scene);
     charGroup.add(boxMesh1);
     charGroup.add(boxMesh2);
     charGroup.add(boxMesh3);
 
-    this.#character_ = char;
+    this.#character_ = giraffe.scene;
     this.#characterGroup_ = charGroup;
     this.#scene_.add(charGroup);
 
@@ -295,12 +362,12 @@ class App {
       wireframe: false,
       transparent: false,
       opacity: 1,
-      color: this.#character_.material.color,
-      position: { x: 0, y: 0.4, z: 0 },
+      color: { r: 1, g: 1, b: 1 },
+      position: { x: 0, y: -1.5, z: 0 },
       rotFactor: 0.2,
     };
     let previousValues = {
-      position: { x: 0, y: 0.4, z: 0 },
+      position: { x: 0, y: -1.5, z: 0 },
       rotFactor: 0.2,
     };
 
@@ -309,32 +376,53 @@ class App {
     charFolder
       .addBinding(this.#character_.customParams, "wireframe")
       .on("change", (evt) => {
-        this.#character_.material.wireframe = evt.value;
+        this.#character_.traverse((c) => {
+          if (c.isMesh) {
+            c.material.wireframe = evt.value;
+          }
+        });
       });
     // NOTE: transparent + opacity are tied together, must have transparent true for opacity to kick in
     charFolder
       .addBinding(this.#character_.customParams, "transparent")
       .on("change", (evt) => {
-        this.#character_.material.transparent = evt.value;
-        // make sure to update material after tweaking it
-        this.#character_.material.needsUpdate = true;
+        this.#character_.traverse((c) => {
+          if (c.isMesh) {
+            c.material.transparent = evt.value;
+            c.material.needsUpdate = true;
+          }
+        });
       });
     // NOTE: params with ranges can follow `addBinding(paramObject, paramProperty, {min: min, max: max, step: step})`
     charFolder
-      .addBinding(this.#character_.customParams, "opacity", { min: 0, max: 0 })
-      .on("change", (evt) => {
-        this.#character_.material.opacity = evt.value;
-      });
-    // NOTE: color param has a "view" object where you can set a colorpicker
-    //  - it looks like it matches the paramObject structure(r,g,b) in our case for THREE.Color
-    charFolder
-      .addBinding(this.#character_.customParams, "color", {
-        view: "color",
-        color: { type: "float" },
+      .addBinding(this.#character_.customParams, "opacity", {
+        min: 0,
+        max: 1,
+        step: 0.01,
       })
       .on("change", (evt) => {
-        this.#character_.material.color.set(evt.value);
+        this.#character_.traverse((c) => {
+          if (c.isMesh) {
+            c.material.opacity = evt.value;
+          }
+        });
       });
+
+    // NOTE: color param has a "view" object where you can set a colorpicker
+    // NOTE: we're not using this since we're now using a model
+    //  - it looks like it matches the paramObject structure(r,g,b) in our case for THREE.Color
+    // charFolder
+    //   .addBinding(this.#character_.customParams, "color", {
+    //     view: "color",
+    //     color: { type: "float" },
+    //   })
+    //   .on("change", (evt) => {
+    //     this.#character_.traverse((c) => {
+    //       if (c.isMesh) {
+    //         c.material.color.set(evt.value);
+    //       }
+    //     });
+    //   });
     charFolder
       .addBinding(this.#character_.customParams, "position")
       .on("change", (evt) => {
