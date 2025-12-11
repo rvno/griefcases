@@ -12,10 +12,6 @@ import { HDRLoader } from "three/addons/loaders/HDRLoader.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js";
 
-//Physics
-import RAPIER from "@dimforge/rapier3d-compat";
-import * as BufferGeometryUtils from "three/addons/utils/BufferGeometryUtils.js";
-
 class App {
   // Three "setup"
   #three_ = null;
@@ -33,12 +29,6 @@ class App {
   #controls_ = null;
   #inputs_ = null;
   #thirdCamera_ = null;
-
-  // Physics
-  #rapierWorld_ = null;
-  #objects_ = [];
-  #physicsTimeAccumulator_ = 0.0;
-  #physicsDebugMesh_ = null;
 
   // Debug & Performance
   #pane_ = null;
@@ -81,12 +71,6 @@ class App {
 
     this.#setupThree_();
     this.#setupBasicScene_();
-
-    // Physics
-    // Note - based on current structure,
-    //  needs to happen first for character rigid body
-    await this.#setupPhysics_(this.#pane_);
-
     await this.#setupCharacter_();
 
     // Input Management
@@ -206,6 +190,22 @@ class App {
       step: 0.01,
     });
 
+    // Add ground mesh
+    const groundGeometry = new THREE.PlaneGeometry(20, 20);
+    const groundMaterial = new THREE.MeshStandardMaterial({
+      color: 0xffffff,
+      metalness: 0.2,
+      roughness: 0.6,
+      side: THREE.DoubleSide,
+    });
+    const groundMesh = new THREE.Mesh(groundGeometry, groundMaterial);
+    // Position the mesh below the box
+    groundMesh.position.y = -0.5;
+    // Rotate the plane so it's horizontal
+    groundMesh.rotation.x = -Math.PI / 2;
+    groundMesh.receiveShadow = true;
+    this.#scene_.add(groundMesh);
+
     const bgFolder = this.#pane_.addFolder({ title: "Background" });
     this.#scene_.backgroundBlurriness = 0.4;
     this.#scene_.backgroundIntensity = 0.5;
@@ -316,8 +316,7 @@ class App {
       }
     });
     // @TODO: need to adjust model pivot point in Blender
-    giraffe.scene.scale.setScalar(0.5);
-    giraffe.scene.position.set(0, -0.5, 0);
+    giraffe.scene.position.set(0, -1.5, 0);
 
     // capsule character placeholder mesh
     // const charGeo = new THREE.CapsuleGeometry(0.5, 0.5, 10, 20);
@@ -357,41 +356,6 @@ class App {
     this.#character_ = giraffe.scene;
     this.#characterGroup_ = charGroup;
     this.#scene_.add(charGroup);
-    console.log(this.#characterGroup_);
-
-    const charRigidBodyDesc = RAPIER.RigidBodyDesc.dynamic();
-    // Copy mesh/group position to the rigid body
-    charRigidBodyDesc.setTranslation(
-      this.#characterGroup_.position.x,
-      this.#characterGroup_.position.y,
-      this.#characterGroup_.position.z
-    );
-    const charRigidBody = this.#rapierWorld_.createRigidBody(charRigidBodyDesc);
-    // Get model dimensions via boundingbox Box3 method
-    const bbox = new THREE.Box3();
-    const size = new THREE.Vector3();
-
-    bbox.setFromObject(this.#characterGroup_);
-    bbox.getSize(size);
-    console.log("Group Dimensions:", size);
-    console.log("Width:", size.x);
-    console.log("Height:", size.y);
-    console.log("Depth:", size.z);
-
-    const charColliderDesc = RAPIER.ColliderDesc.cuboid(size.x, size.y, size.z);
-    // Set event collider
-    charColliderDesc.setActiveEvents(RAPIER.ActiveEvents.COLLISION_EVENTS);
-    const charCollider = this.#rapierWorld_.createCollider(
-      charColliderDesc,
-      charRigidBody
-    );
-
-    // Add to list of physics objects
-    this.#objects_.push({
-      mesh: this.#characterGroup_,
-      rigidBody: charRigidBody,
-      collider: charCollider,
-    });
 
     // Create a character tweak pane folder
     this.#character_.customParams = {
@@ -493,139 +457,12 @@ class App {
    */
   #setup3rdCamera_(pane) {
     this.#thirdCamera_ = new ThirdPersonCamera(
-      new THREE.Vector3(0, 2, -3.3),
+      new THREE.Vector3(0, 1, -3),
       new THREE.Vector3(0, 1, 5),
       this.#characterGroup_,
       this.#camera_,
       pane
     );
-  }
-
-  async #setupPhysics_(pane) {
-    // Pane
-    const physicsFolder = this.#pane_.addFolder({ title: "Physics" });
-    await RAPIER.init();
-
-    const GRAVITY = { x: 0.0, y: -9.8, z: 0.0 };
-    this.#rapierWorld_ = new RAPIER.World(GRAVITY);
-
-    // Create the ground
-    // Abstract ground dimensions since we'll need it for the collider
-    const GROUND_DIMS = { x: 10, y: 0.05, z: 10 };
-    // Add ground mesh
-    // Note: We change to a box for the floor
-    const groundGeometry = new THREE.BoxGeometry(
-      GROUND_DIMS.x * 2,
-      GROUND_DIMS.y * 2,
-      GROUND_DIMS.z * 2
-    );
-    const groundMaterial = new THREE.MeshStandardMaterial({
-      color: 0xffffff,
-      metalness: 0.2,
-      roughness: 0.6,
-      side: THREE.DoubleSide,
-    });
-    const groundMesh = new THREE.Mesh(groundGeometry, groundMaterial);
-    // Position the mesh below the box
-    // groundMesh.position.y = -0.5;
-    // Rotate the plane so it's horizontal
-    // groundMesh.rotation.x = -Math.PI / 2;
-    groundMesh.receiveShadow = true;
-    this.#scene_.add(groundMesh);
-
-    // Create the Ground Rigid Body + Desc + Collider
-    // Fixed rigid body for ground
-    const groundRigidBodyDesc = RAPIER.RigidBodyDesc.fixed();
-    const groundRigidBody =
-      this.#rapierWorld_.createRigidBody(groundRigidBodyDesc);
-    // NOTE: kind of like creating a geo, material, then mesh
-    const groundColliderDesc = RAPIER.ColliderDesc.cuboid(
-      GROUND_DIMS.x,
-      GROUND_DIMS.y,
-      GROUND_DIMS.z
-    );
-    this.#rapierWorld_.createCollider(groundColliderDesc);
-
-    // load the turtle
-    const turtle = await this.#LoadGLB_("./models/turtle.glb");
-    turtle.scene.traverse((c) => {
-      if (c.isMesh) {
-        c.castShadow = true;
-        c.receiveShadow = true;
-        c.shadowSide = THREE.DoubleSide;
-      }
-    });
-    turtle.scene.scale.setScalar(0.5);
-    turtle.scene.position.set(-3, -0.835, 4);
-    this.#scene_.add(turtle.scene);
-    this.#createPhysicsMesh_(turtle.scene);
-  }
-
-  #createPhysicsMesh_(mesh) {
-    const geos = [];
-
-    mesh.traverse((child) => {
-      // update world matrix
-      child.updateMatrixWorld();
-
-      if (child instanceof THREE.Mesh) {
-        child.castShadow = true;
-        child.receiveShadow = true;
-
-        if (child.geometry) {
-          const geo = new THREE.BufferGeometry();
-          geo.setIndex(child.geometry.index.clone());
-          geo.setAttribute(
-            "position",
-            child.geometry.attributes.position.clone()
-          );
-          geo.applyMatrix4(child.matrixWorld);
-          geos.push(geo);
-        }
-      }
-    });
-
-    const physicsGeo = BufferGeometryUtils.mergeGeometries(geos);
-
-    const vertices = physicsGeo.attributes.position.array;
-    const indices = physicsGeo.index.array;
-
-    const rigidBodyDesc = RAPIER.RigidBodyDesc.dynamic();
-    // rigidBodyDesc.setTranslation(
-    //   mesh.position.x,
-    //   mesh.position.y,
-    //   mesh.position.z
-    // );
-    rigidBodyDesc.setTranslation(0, 5, 0);
-
-    const q = new RAPIER.Quaternion(
-      mesh.quaternion.x,
-      mesh.quaternion.y,
-      mesh.quaternion.z,
-      mesh.quaternion.w
-    );
-    rigidBodyDesc.setRotation(q);
-    // NOTE: for complex objects - create a bounding box around them
-
-    const rigidBody = this.#rapierWorld_.createRigidBody(rigidBodyDesc);
-
-    const colliderDesc = RAPIER.ColliderDesc.cuboid(1, 1, 1);
-    // now use convex hull
-    // const colliderDesc = RAPIER.ColliderDesc.convexHull(
-    //   new Float32Array(vertices)
-    // );
-    // now use trimesh - highest cost
-    // const colliderDesc = RAPIER.ColliderDesc.trimesh(
-    //   new Float32Array(vertices),
-    //   new Uint32Array(indices)
-    // );
-
-    this.#rapierWorld_.createCollider(colliderDesc, rigidBody);
-
-    this.#objects_.push({
-      mesh: mesh,
-      rigidBody: rigidBody,
-    });
   }
 
   /**
