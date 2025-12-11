@@ -452,6 +452,12 @@ section.sticky {
   height: 100%;
 }
 
+/* canvas */
+#three {
+  width: 100vw;
+  height: 100vh;
+}
+
 /* tweakpane */
 .tp-dfwv {
   position: fixed !important;

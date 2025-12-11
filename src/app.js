@@ -117,8 +117,9 @@ class App {
    */
   #setupThree_() {
     // Set up renderer
-    this.#three_ = new THREE.WebGLRenderer({ antialias: true });
-    document.body.appendChild(this.#three_.domElement);
+    const canvas = document.getElementById("three");
+    this.#three_ = new THREE.WebGLRenderer({ antialias: true, canvas: canvas });
+    // document.body.appendChild(this.#three_.domElement);
     this.#three_.domElement.setAttribute("id", "three");
     const w = window.innerWidth;
     const h = window.innerHeight;
