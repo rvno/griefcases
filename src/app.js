@@ -408,7 +408,7 @@ class App {
     return new Promise((resolve, reject) => {
       this.#ktx2Loader_.load(path, (texture) => {
         if (srgb) {
-          texture.encoding = THREE.sRGBEncoding;
+          texture.colorSpace = THREE.SRGBColorSpace;
         }
         resolve(texture);
       });
