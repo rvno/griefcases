@@ -9,6 +9,9 @@ import { HDRLoader } from "three/addons/loaders/HDRLoader.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js";
 
+// for texture
+import { KTX2Loader } from "three/addons/loaders/KTX2Loader.js";
+
 // Effects
 import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
 import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
@@ -25,6 +28,9 @@ class App {
 
   // Scene Controls
   #controls_ = null;
+
+  // Loaders
+  #ktx2Loader_ = null;
 
   // Effect Composer/Post Processing
   #composer_ = null;
@@ -70,7 +76,10 @@ class App {
 
     this.#setupThree_();
 
+    await this.#setupLoaders_();
+
     // Initialize post fx
+
     const postFXFolder = this.#pane_.addFolder({
       title: "PostFX",
       expanded: false,
@@ -90,6 +99,13 @@ class App {
     // @TODO: consider three-perf lib
     document.body.appendChild(this.#stats_.dom);
   }
+
+  async #setupLoaders_() {
+    this.#ktx2Loader_ = new KTX2Loader();
+    this.#ktx2Loader_.setTranscoderPath("./libs/basis/");
+    this.#ktx2Loader_.detectSupport(this.#three_);
+  }
+
   /**
    * Sets up three - since we repeat code in onResize,
    *  there's more abstracted to that function.
@@ -387,6 +403,51 @@ class App {
 
         resolve();
       });
+    });
+  }
+
+  async #loadKTX2_(path, srgb = true) {
+    return new Promise((resolve, reject) => {
+      this.#ktx2Loader_.load(path, (texture) => {
+        if (srgb) {
+          texture.encoding = THREE.sRGBEncoding;
+        }
+        resolve(texture);
+      });
+    });
+  }
+
+  async loadTexture(path, srgb = true) {
+    if (path.endsWith(".ktx2")) {
+      return this.#loadKTX2_(path, srgb);
+    } else {
+      return new Promise((resolve, reject) => {
+        const loader = new THREE.TextureLoader();
+        loader.load(path, (texture) => {
+          if (srgb) {
+            texture.colorSpace = THREE.SRGBColorSpace;
+          }
+          resolve(texture);
+        });
+      });
+    }
+  }
+
+  /**
+   *
+   * Loads shader files
+   * @param {*} name
+   * @param {*} uniforms
+   * @returns
+   */
+  async LoadShader_(name, uniforms) {
+    const vsh = await fetch(`./shaders/${name}-vsh.glsl`).then((r) => r.text());
+    const fsh = await fetch(`./shaders/${name}-fsh.glsl`).then((r) => r.text());
+
+    return new THREE.ShaderMaterial({
+      uniforms: uniforms,
+      vertexShader: vsh,
+      fragmentShader: fsh,
     });
   }
 

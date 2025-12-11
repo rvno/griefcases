@@ -4,6 +4,9 @@ import { App } from "./app.js";
 import { InputManager } from "./input-manager.js";
 import { ThirdPersonCamera } from "./third-person-camera.js";
 
+import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
+import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
+
 class Project extends App {
   // Scene
   #sun_ = null;
@@ -17,6 +20,17 @@ class Project extends App {
   #inputs_ = null;
   #thirdCamera_ = null;
 
+  // Depth Effect
+  #renderTarget_ = null;
+  #depthCopy_ = null;
+  #depthCopyMaterial_ = null;
+  #colourCopyMaterial_ = null;
+  #transparentScene_ = null;
+
+  #viewScene_ = null;
+  #viewCamera_ = null;
+  #viewQuad_ = null;
+
   constructor() {
     super();
   }
@@ -28,9 +42,10 @@ class Project extends App {
    * - instantiates the 3rd person camera
    */
   async onSetupProject() {
-    this.#setupBasicScene_();
-
     await this.#setupEnvironment_();
+    await this.#setupDepth_();
+
+    await this.#setupBasicScene_();
 
     await this.#setupCharacter_();
 
@@ -46,7 +61,7 @@ class Project extends App {
    * Sets up the scene
    * - adds a cube
    */
-  #setupBasicScene_() {
+  async #setupBasicScene_() {
     // Setup Light
     const light = new THREE.DirectionalLight(0xffffff, 2.0);
     light.position.set(5, 20, 5);
@@ -92,6 +107,174 @@ class Project extends App {
     groundMesh.rotation.x = -Math.PI / 2;
     groundMesh.receiveShadow = true;
     this.Scene.add(groundMesh);
+
+    // Depth Portion
+    // create a cube in the middle
+    const cubeMaterial = new THREE.MeshStandardMaterial({
+      color: 0x808080,
+      metalness: 0,
+      roughness: 0.8,
+    });
+    const cubeGeometry = new THREE.BoxGeometry(1, 1, 1);
+    const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
+    cube.position.set(4, 0, 3);
+    cube.receivehadow = true;
+    cube.castShadow = true;
+    this.addToScene(cube);
+
+    // create a forcefield thing
+    const forceFieldMaterial = await this.LoadShader_("depth-test", {
+      depthTexture: { value: this.#depthCopy_.texture },
+      cameraNearFar: {
+        value: new THREE.Vector2(this.Camera.near, this.Camera.far),
+      },
+      resolution: {
+        value: new THREE.Vector2(window.innerWidth, window.innerHeight),
+      },
+      // map is the texture we're applying to the shader
+      map: {
+        value: await this.loadTexture("./textures/circle.ktx2", true),
+      },
+      time: { value: 0 },
+    });
+
+    forceFieldMaterial.uniforms.map.value.wrapS = THREE.RepeatWrapping;
+    forceFieldMaterial.uniforms.map.value.wrapT = THREE.RepeatWrapping;
+    forceFieldMaterial.transparent = true;
+    forceFieldMaterial.side = THREE.DoubleSide;
+    forceFieldMaterial.depthTest = true;
+    forceFieldMaterial.depthWrite = false;
+    forceFieldMaterial.blending = THREE.AdditiveBlending;
+
+    const forceField = new THREE.Mesh(cubeGeometry, forceFieldMaterial);
+    forceField.scale.setScalar(4);
+    forceField.position.copy(cube.position);
+
+    this.#transparentScene_.add(forceField);
+  }
+
+  async #setupDepth_() {
+    const renderTargetOptions = {
+      minFilter: THREE.NearestFilter,
+      magFilter: THREE.NearestFilter,
+      format: THREE.RGBAFormat,
+      type: THREE.UnsignedByteType,
+    };
+
+    this.#renderTarget_ = new THREE.WebGLRenderTarget(
+      window.innerWidth,
+      window.innerHeight,
+      renderTargetOptions
+    );
+
+    // Depth
+    this.#renderTarget_.depthTexture = new THREE.DepthTexture(
+      window.innerWidth,
+      window.innerHeight
+    );
+
+    const depthOptions = {
+      minFilter: THREE.NearestFilter,
+      magFilter: THREE.NearestFilter,
+      format: THREE.RGBAFormat,
+      type: THREE.UnsignedByteType,
+      type: THREE.FloatType,
+    };
+    this.#depthCopy_ = new THREE.WebGLRenderTarget(
+      window.innerWidth,
+      window.innerHeight,
+      depthOptions
+    );
+
+    this.#depthCopyMaterial_ = await this.LoadShader_("depth-copy", {
+      depthTexture: { value: null },
+    });
+    this.#depthCopyMaterial_.depthTest = false;
+    this.#depthCopyMaterial_.depthWrite = false;
+
+    const quadGeo = new THREE.PlaneGeometry(2, 2);
+    const quadMaterial = new THREE.MeshBasicMaterial({
+      depthTest: false,
+      depthWrite: false,
+    });
+    const quad = new THREE.Mesh(quadGeo, quadMaterial);
+
+    this.#colourCopyMaterial_ = quadMaterial;
+    // we use these to draw the render target and depth texture on the screen
+    this.#viewScene_ = new THREE.Scene();
+    this.#viewCamera_ = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 1000);
+    this.#viewQuad_ = quad;
+
+    this.#viewScene_.add(quad);
+
+    this.#transparentScene_ = new THREE.Scene();
+  }
+
+  createComposer() {
+    const options = {
+      format: THREE.RGBAFormat,
+      type: THREE.HalfFloatType,
+      minFilter: THREE.NearestFilter,
+      magFilter: THREE.NearestFilter,
+    };
+    const rt = new THREE.WebGLRenderTarget(
+      window.innerWidth,
+      window.innerHeight,
+      options
+    );
+    rt.depthTexture = new THREE.DepthTexture(
+      window.innerWidth,
+      window.innerHeight
+    );
+
+    // this allows us to use our composer rather than the one created in app js
+    const composer = new EffectComposer(this.Renderer, rt);
+
+    return composer;
+  }
+
+  createMainRenderPass() {
+    class MainRenderPass extends RenderPass {
+      #app_ = null;
+
+      constructor(scene, camera, app) {
+        super(scene, camera);
+        this.#app_ = app;
+      }
+
+      render(renderer, writeBuffer, readBuffer, deltaTime, maskActive) {
+        this.#app_.renderMainPass(readBuffer);
+      }
+    }
+
+    return new MainRenderPass(this.Scene, this.Camera, this);
+  }
+
+  // this method was made by copying onRender below
+  renderMainPass(readBuffer) {
+    // renders the scene and depth
+    this.Renderer.setRenderTarget(readBuffer);
+    this.Renderer.render(this.Scene, this.Camera);
+    this.Renderer.setRenderTarget(null);
+
+    // copy the depth texture
+    this.#depthCopyMaterial_.uniforms.depthTexture.value =
+      readBuffer.depthTexture;
+    this.#viewQuad_.material = this.#depthCopyMaterial_;
+    this.#viewQuad_.position.set(0, 0, -1);
+    this.#viewQuad_.scale.setScalar(1);
+    this.Renderer.setRenderTarget(this.#depthCopy_);
+    this.Renderer.render(this.#viewScene_, this.#viewCamera_);
+    this.Renderer.setRenderTarget(null);
+    this.#viewQuad_.material = this.#colourCopyMaterial_;
+
+    // render the transparent scene
+    this.Renderer.autoClear = false;
+    this.Renderer.setRenderTarget(readBuffer);
+    this.Renderer.render(this.#transparentScene_, this.Camera);
+    this.Renderer.setRenderTarget(null);
+
+    this.Renderer.autoClear = true;
   }
 
   async #setupCharacter_() {
@@ -374,6 +557,14 @@ class Project extends App {
   }
 
   onStep(elapsedTime, totalElapsedTime) {
+    this.#transparentScene_.traverse((obj) => {
+      if (obj.isMesh) {
+        if (obj.material.uniforms) {
+          obj.material.uniforms.time.value = totalElapsedTime;
+        }
+      }
+    });
+
     this.#updateCharacterMovement_(elapsedTime);
     this.#updateCamera_(elapsedTime);
     this.#updateSun_(elapsedTime);
