@@ -90,7 +90,7 @@ section.outro {
 section.sticky {
   /* background-color: #b4aea7; */
   /* paper bg */
-  background-image: url("imgs/paper-texture.webp");
+  background-image: url("public/imgs/paper-texture.webp");
   background-size: cover;
 }
 
@@ -219,7 +219,7 @@ section.sticky {
 }
 
 .masked-image__surface {
-  background-image: url("imgs/paper-mask");
+  background-image: url("public/imgs/paper-mask.avif");
   background-position: 0% 0%;
   background-size: 100%;
   width: 100%;
@@ -299,7 +299,7 @@ section.sticky {
   top: -5rem;
   width: calc(100% + 20rem);
   height: calc(100% + 20rem);
-  background-image: url(imgs/noise.png);
+  background-image: url("imgs/noise.png");
   background-position: 50%;
   background-size: cover;
   background-repeat: no-repeat;
