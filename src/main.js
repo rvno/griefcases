@@ -136,6 +136,10 @@ class Project extends App {
         value: await this.loadTexture("./textures/circle.ktx2", true),
       },
       time: { value: 0 },
+      fadeTop: { value: 0.0 },
+      fadeBottom: { value: 0.0 },
+      color1: { value: new THREE.Vector3(0.0, 0.0, 1.0) }, // Blue
+      color2: { value: new THREE.Vector3(1.0, 0.5, 0.0) }, // Orange
     });
 
     forceFieldMaterial.uniforms.map.value.wrapS = THREE.RepeatWrapping;
@@ -147,10 +151,73 @@ class Project extends App {
     forceFieldMaterial.blending = THREE.AdditiveBlending;
 
     const forceField = new THREE.Mesh(cubeGeometry, forceFieldMaterial);
-    forceField.scale.setScalar(4);
+    const forceFieldScale = 2;
+    forceField.scale.setScalar(forceFieldScale);
     forceField.position.copy(cube.position);
 
+    // Calculate fade bounds based on forcefield dimensions
+    // Get the geometry's bounding box to find actual dimensions
+    cubeGeometry.computeBoundingBox();
+    const bbox = cubeGeometry.boundingBox;
+    const geometryHeight = bbox.max.y - bbox.min.y;
+
+    // Calculate world-space height after scaling
+    const worldHeight = geometryHeight * forceFieldScale;
+    const halfHeight = worldHeight / 2;
+
+    // Fade happens only in the last 25% from the top
+    // Top of forcefield is at: cube.position.y + halfHeight
+    // 75% height (where fade starts): cube.position.y + halfHeight - (worldHeight * 0.75)
+    const topOfField = cube.position.y + halfHeight;
+    const fadeStartHeight = worldHeight * 0.25; // 25% of total height
+
+    forceFieldMaterial.uniforms.fadeTop.value = topOfField;
+    forceFieldMaterial.uniforms.fadeBottom.value = topOfField - fadeStartHeight;
+
     this.#transparentScene_.add(forceField);
+
+    // Create forcefield tweak pane folder
+    const forceFieldFolder = this.Pane.addFolder({ title: "Forcefield" });
+
+    // Custom params for tweakpane
+    const forceFieldParams = {
+      scale: forceFieldScale,
+      color1: { r: 0.0, g: 0.0, b: 1.0 },
+      color2: { r: 1.0, g: 0.5, b: 0.0 },
+    };
+
+    forceFieldFolder
+      .addBinding(forceFieldParams, "scale", { min: 0.1, max: 10.0, step: 0.1 })
+      .on("change", (evt) => {
+        forceField.scale.setScalar(evt.value);
+
+        // Recalculate fade bounds based on new scale
+        const newWorldHeight = geometryHeight * evt.value;
+        const newHalfHeight = newWorldHeight / 2;
+        const newTopOfField = cube.position.y + newHalfHeight;
+        const newFadeStartHeight = newWorldHeight * 0.25;
+
+        forceFieldMaterial.uniforms.fadeTop.value = newTopOfField;
+        forceFieldMaterial.uniforms.fadeBottom.value = newTopOfField - newFadeStartHeight;
+      });
+
+    forceFieldFolder
+      .addBinding(forceFieldParams, "color1", {
+        view: "color",
+        color: { type: "float" },
+      })
+      .on("change", (evt) => {
+        forceFieldMaterial.uniforms.color1.value.set(evt.value.r, evt.value.g, evt.value.b);
+      });
+
+    forceFieldFolder
+      .addBinding(forceFieldParams, "color2", {
+        view: "color",
+        color: { type: "float" },
+      })
+      .on("change", (evt) => {
+        forceFieldMaterial.uniforms.color2.value.set(evt.value.r, evt.value.g, evt.value.b);
+      });
   }
 
   async #setupDepth_() {

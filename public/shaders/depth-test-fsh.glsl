@@ -6,6 +6,10 @@ uniform vec2 cameraNearFar;
 uniform vec2 resolution;
 uniform sampler2D map;
 uniform float time;
+uniform float fadeTop;
+uniform float fadeBottom;
+uniform vec3 color1;
+uniform vec3 color2;
 
 // a 3js included shader function that unpacks/packs values - including depth buffer values
 #include <packing>
@@ -75,8 +79,11 @@ void main(){
 
   float distToBackground = viewZ - depth;
 
-  // fades out the force fielda s it goes higher
-  float alpha = inverseLerp(2.0, 0.0, vPositionWorld.y);
+  // fades out the force field based on vertical position
+  // Original: float alpha = inverseLerp(2.0, 0.0, vPositionWorld.y);
+  // fadeTop = where fade starts (fully visible above this)
+  // fadeBottom = where fade ends (fully transparent below this)
+  float alpha = inverseLerp(fadeTop, fadeBottom, vPositionWorld.y);
   alpha = pow(alpha, 2.0);
 
   // when the distance between forcefield cube and background gets closer to 0 , intensity scales
@@ -92,9 +99,10 @@ void main(){
 
   // return;
 
-  vec3 BLUE = vec3(0.0,0.0,1.0);
-  vec3 ORANGE = vec3(1.0,0.5, 0.0);
-  vec3 tintColour = mix(BLUE, ORANGE, alpha) * 5.0;
+  // ORIGINAL: vec3 BLUE = vec3(0.0,0.0,1.0);
+  // ORIGINAL: vec3 ORANGE = vec3(1.0,0.5, 0.0);
+  // ORIGINAL: vec3 tintColour = mix(BLUE, ORANGE, alpha) * 5.0;
+  vec3 tintColour = mix(color1, color2, alpha) * 5.0;
 
   // gl_FragColor = vec4(vec3(distToBackground), alpha);
 
@@ -108,7 +116,8 @@ void main(){
   // applying circle texture
   // renaming to shield colour
   vec3 shieldColour = mapSample.xyz * tintColour * alpha;
-  vec3 glowColour = ORANGE * (alpha + glow); 
+  // ORIGINAL: vec3 glowColour = ORANGE * (alpha + glow);
+  vec3 glowColour = color2 * (alpha + glow); 
   vec3 finalColour = glowColour + shieldColour * noiseSample;
   gl_FragColor = vec4(finalColour, 1.0);
 }

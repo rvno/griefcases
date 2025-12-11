@@ -20,7 +20,24 @@
   - Wildcard selector ensures all children of masked-bg fill 100% width/height
   - Result: Layered masking effect where overlay provides shape definition while masked layer adds blended visual interest
 
-  ## 12-09-24
+## 12-09-24
 
-  - Setup threejs scene
-  - basic light, stats, tweakpane, and box mesh
+- Setup threejs scene
+- basic light, stats, tweakpane, and box mesh
+
+## 12-10-24
+
+- setup 3rd person camera
+- input manager
+- readded html elements
+- added custom models
+
+## 12-11-24
+
+- Implemented dynamic forcefield shader controls
+
+  - **Fade System**: Changed from hardcoded fade values to dimension-based calculation. Fade now occurs only in the top 25% of the forcefield height, calculated from geometry bounding box and scale (main.js:249-266). When scale changes via Tweakpane, `fadeTop` and `fadeBottom` uniforms automatically recalculate to maintain the 25% fade region.
+
+  - **Color Uniforms**: Replaced hardcoded `BLUE` and `ORANGE` shader constants with `color1` and `color2` uniforms (depth-test-fsh.glsl:11-12, 101, 116). JavaScript initializes these as `THREE.Vector3` values (main.js:232-233) and Tweakpane color pickers update them in real-time (main.js:295-311).
+
+  - **Tweakpane Integration**: Added "Forcefield" folder with scale slider (0.1-10.0) and two color pickers, allowing real-time adjustment of all visual properties while maintaining proper fade behavior at any scale.
