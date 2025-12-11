@@ -12,6 +12,7 @@ class Project extends App {
   #sun_ = null;
   #character_ = null;
   #characterGroup_ = null;
+  #objects_ = [];
 
   // Environment
   #environment_ = {};
@@ -198,7 +199,8 @@ class Project extends App {
         const newFadeStartHeight = newWorldHeight * 0.25;
 
         forceFieldMaterial.uniforms.fadeTop.value = newTopOfField;
-        forceFieldMaterial.uniforms.fadeBottom.value = newTopOfField - newFadeStartHeight;
+        forceFieldMaterial.uniforms.fadeBottom.value =
+          newTopOfField - newFadeStartHeight;
       });
 
     forceFieldFolder
@@ -207,7 +209,11 @@ class Project extends App {
         color: { type: "float" },
       })
       .on("change", (evt) => {
-        forceFieldMaterial.uniforms.color1.value.set(evt.value.r, evt.value.g, evt.value.b);
+        forceFieldMaterial.uniforms.color1.value.set(
+          evt.value.r,
+          evt.value.g,
+          evt.value.b
+        );
       });
 
     forceFieldFolder
@@ -216,8 +222,57 @@ class Project extends App {
         color: { type: "float" },
       })
       .on("change", (evt) => {
-        forceFieldMaterial.uniforms.color2.value.set(evt.value.r, evt.value.g, evt.value.b);
+        forceFieldMaterial.uniforms.color2.value.set(
+          evt.value.r,
+          evt.value.g,
+          evt.value.b
+        );
       });
+
+    // load turtle
+
+    const turtle = await this.LoadGLB_("./models/turtle.glb");
+    turtle.scene.traverse((c) => {
+      if (c.isMesh) {
+        c.castShadow = true;
+        c.receiveShadow = true;
+        c.shadowSide = THREE.DoubleSide;
+      }
+    });
+    // @TODO: need to adjust model pivot point in Blender
+    // turtle.scene.scale.setScalar(0.5);
+    const turtleParams = {
+      scalar: 1,
+      position: { x: -3, y: -2.75, z: 4 },
+      rotation: { x: 0, y: 0, z: 0 },
+    };
+    turtle.scene.position.set(
+      turtleParams.position.x,
+      turtleParams.position.y,
+      turtleParams.position.z
+    );
+    this.Scene.add(turtle.scene);
+    this.#objects_.push({ name: "turtle", mesh: turtle.scene });
+    this.#createModelBinding_("turtle", turtle.scene, this.Pane, turtleParams);
+  }
+
+  #createModelBinding_(name, model, pane, params) {
+    const folder = pane.addFolder({ title: name });
+
+    // We mainly want the position and scale so we can just tweak
+    //  the orientation in the scene
+    folder.addBinding(params, "position").on("change", (evt) => {
+      const currentValue = evt.value;
+      model.position.set(evt.value.x, evt.value.y, evt.value.z);
+    });
+    folder.addBinding(params, "scalar").on("change", (evt) => {
+      const currentValue = evt.value;
+      model.scale.setScalar(evt.value);
+    });
+    folder.addBinding(params, "rotation").on("change", (evt) => {
+      const currentValue = evt.value;
+      model.rotation.set(evt.value.x, evt.value.y, evt.value.z);
+    });
   }
 
   async #setupDepth_() {
