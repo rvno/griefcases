@@ -9,6 +9,13 @@ import { HDRLoader } from "three/addons/loaders/HDRLoader.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js";
 
+// Effects
+import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
+import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
+import { ShaderPass } from "three/addons/postprocessing/ShaderPass.js";
+import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
+import { BloomPass } from "./bloomPass.js";
+
 class App {
   // Three "setup"
   #three_ = null;
@@ -18,6 +25,9 @@ class App {
 
   // Scene Controls
   #controls_ = null;
+
+  // Effect Composer/Post Processing
+  #composer_ = null;
 
   // Debug & Performance
   #pane_ = null;
@@ -59,6 +69,14 @@ class App {
     this.#setupStats_();
 
     this.#setupThree_();
+
+    // Initialize post fx
+    const postFXFolder = this.#pane_.addFolder({
+      title: "PostFX",
+      expanded: false,
+    });
+
+    await this.#setupPostProcessing_(postFXFolder);
 
     await this.onSetupProject();
   }
@@ -134,6 +152,9 @@ class App {
     // Update camera
     this.#camera_.aspect = aspect;
     this.#camera_.updateProjectionMatrix();
+
+    // Update composer
+    this.#composer_.setSize(w * dpr, h * dpr);
   }
 
   /**
@@ -156,7 +177,11 @@ class App {
    * - renders the scene
    */
   #render_() {
-    this.#three_.render(this.#scene_, this.#camera_);
+    // this.#three_.render(this.#scene_, this.#camera_);
+    // Note: because we're using the same scene + camera, we're able to just use our new effect composer
+    this.#composer_.render();
+
+    // our overrideable function
     this.onRender();
   }
 
@@ -183,8 +208,115 @@ class App {
     });
   }
 
+  /**
+   *
+   * Exposes addToScene function that allows us to call
+   *  this.addToScene to add an object
+   * @param {*} object
+   */
   addToScene(object) {
     this.#scene_.add(object);
+  }
+
+  /**
+   * invokes EffectComposer using our webgl renderer
+   * @returns EffectComposer
+   */
+  createComposer() {
+    return new EffectComposer(this.#three_);
+  }
+
+  /**
+   * Creates a new RenderPass
+   * @returns RenderPass
+   */
+  createMainRenderPass() {
+    return new RenderPass(this.#scene_, this.#camera_);
+  }
+
+  /**
+   *
+   * PostProcessing setup
+   * - we create a composer that takes at a minimum -  render and output pass
+   * - we then create passes for the different effects
+   * - those get added to the composer
+   * @param {*} pane
+   */
+  async #setupPostProcessing_(pane) {
+    this.#composer_ = this.createComposer();
+    const renderPass = this.createMainRenderPass();
+    const outputPass = new OutputPass();
+
+    // Shader pass
+    const vsh = await fetch("./shaders/vignette-vsh.glsl");
+    const fsh = await fetch("./shaders/vignette-fsh.glsl");
+
+    const vshText = await vsh.text();
+    const fshText = await fsh.text();
+
+    const shaderData = {
+      vertexShader: vshText,
+      fragmentShader: fshText,
+      uniforms: {
+        tDiffuse: { value: null },
+        time: { value: 0.0 },
+        intensity: { value: 0.4 },
+        dropoff: { value: 0.25 },
+      },
+    };
+
+    // Vignette Pass
+    const vignettePass = new ShaderPass(shaderData);
+    const shaderOptions = {
+      intensity: shaderData.uniforms.intensity.value,
+      dropoff: shaderData.uniforms.dropoff.value,
+    };
+    const shaderFolder = pane.addFolder({ title: "vignette" });
+    shaderFolder.addBinding(vignettePass, "enabled");
+    shaderFolder
+      .addBinding(shaderOptions, "intensity", { min: 0.0, max: 1.0 })
+      .on("change", (e) => {
+        vignettePass.material.uniforms.intensity.value = e.value;
+      });
+    shaderFolder
+      .addBinding(shaderOptions, "dropoff", { min: 0.0, max: 1.0 })
+      .on("change", (e) => {
+        vignettePass.material.uniforms.dropoff.value = e.value;
+      });
+
+    // Bloom Pass
+    const simonBloom = new BloomPass();
+    const simonFolder = pane.addFolder({ title: "Bloom" });
+    simonFolder.addBinding(simonBloom, "enabled");
+    const prefilterFolder = simonFolder.addFolder({
+      title: "Prefilter",
+      expanded: false,
+    });
+    prefilterFolder.addBinding(simonBloom.Settings.render, "brightness", {
+      min: 0.0,
+      max: 2.0,
+    });
+    prefilterFolder.addBinding(simonBloom.Settings.render, "contrast", {
+      min: 0.0,
+      max: 2.0,
+    });
+    prefilterFolder.addBinding(simonBloom.Settings.render, "saturation", {
+      min: 0.0,
+      max: 2.0,
+    });
+    simonFolder.addBinding(simonBloom.Settings.composite, "strength", {
+      min: 0.0,
+      max: 2.0,
+    });
+    simonFolder.addBinding(simonBloom.Settings.composite, "mixFactor", {
+      min: 0.0,
+      max: 1.0,
+    });
+
+    this.#composer_.addPass(renderPass);
+    this.#composer_.addPass(simonBloom);
+    this.#composer_.addPass(vignettePass);
+    this.#composer_.addPass(outputPass);
   }
 
   /**
@@ -237,6 +369,12 @@ class App {
     // );
   }
 
+  /**
+   *
+   * Loads an environment texture
+   * @param {*} path
+   * @returns
+   */
   async LoadHDR_(path) {
     const rgbeLoader = new HDRLoader();
     return new Promise((resolve, reject) => {
