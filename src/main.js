@@ -6,6 +6,8 @@ import Stats from "three/addons/libs/Stats.module.js";
 import { InputManager } from "./input-manager.js";
 import { ThirdPersonCamera } from "./third-person-camera.js";
 
+import { RGBELoader } from "three/addons/loaders/RGBELoader.js";
+
 class App {
   // Three "setup"
   #three_ = null;
@@ -17,6 +19,7 @@ class App {
   #sun_ = null;
   #character_ = null;
   #characterGroup_ = null;
+  #environment_ = {};
 
   // Scene Controls
   #controls_ = null;
@@ -198,6 +201,53 @@ class App {
     groundMesh.rotation.x = -Math.PI / 2;
     groundMesh.receiveShadow = true;
     this.#scene_.add(groundMesh);
+
+    const bgFolder = this.#pane_.addFolder({ title: "Background" });
+    this.#scene_.backgroundBlurriness = 0.4;
+    this.#scene_.backgroundIntensity = 0.5;
+    this.#scene_.environmentIntensity = 0.5;
+    this.#environment_.customParams = {
+      hdrTexture: "autumn_field_puresky_1k.hdr",
+    };
+
+    bgFolder
+      .addBinding(this.#environment_.customParams, "hdrTexture", {
+        options: {
+          "Autumn Field": "autumn_field_puresky_1k.hdr",
+          "Rosendal Park Sunset": "rosendal_park_sunset_1k.hdr",
+          "Zwartkops Sunset": "zwartkops_straight_sunset_1k.hdr",
+        },
+      })
+      .on("change", (evt) => {
+        this.#LoadRGBE_(`./skybox/${evt.value}`);
+      });
+    bgFolder.addBinding(this.#scene_, "backgroundBlurriness", {
+      min: 0,
+      max: 1,
+      step: 0.01,
+    });
+    bgFolder.addBinding(this.#scene_, "backgroundIntensity", {
+      min: 0,
+      max: 1,
+      step: 0.01,
+    });
+    bgFolder.addBinding(this.#scene_, "environmentIntensity", {
+      min: 0,
+      max: 1,
+      step: 0.01,
+    });
+
+    this.#LoadRGBE_(`./skybox/${this.#environment_.customParams.hdrTexture}`);
+  }
+
+  #LoadRGBE_(path) {
+    const rgbeLoader = new RGBELoader();
+    rgbeLoader.load(path, (hdrTexture) => {
+      hdrTexture.mapping = THREE.EquirectangularReflectionMapping;
+
+      this.#scene_.background = hdrTexture;
+      this.#scene_.environment = hdrTexture;
+    });
   }
 
   #setupCharacter_() {
