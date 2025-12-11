@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { Pane } from "tweakpane";
-import Stats from "three/addons/libs/Stats.module.js";
+// import Stats from "three/addons/libs/Stats.module.js";
 
 // for environments
 import { HDRLoader } from "three/addons/loaders/HDRLoader.js";
@@ -72,7 +72,7 @@ class App {
   async #setupProject_() {
     // Debug & Performance
     this.#setupPane_();
-    this.#setupStats_();
+    // this.#setupStats_();
 
     this.#setupThree_();
 
