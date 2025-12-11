@@ -29,6 +29,9 @@ class Project extends App {
    */
   async onSetupProject() {
     this.#setupBasicScene_();
+
+    await this.#setupEnvironment_();
+
     await this.#setupCharacter_();
 
     // Input Management
@@ -89,43 +92,6 @@ class Project extends App {
     groundMesh.rotation.x = -Math.PI / 2;
     groundMesh.receiveShadow = true;
     this.Scene.add(groundMesh);
-
-    const bgFolder = this.Pane.addFolder({ title: "Background" });
-    this.Scene.backgroundBlurriness = 0.4;
-    this.Scene.backgroundIntensity = 0.5;
-    this.Scene.environmentIntensity = 0.5;
-    this.#environment_.customParams = {
-      hdrTexture: "autumn_field_puresky_1k.hdr",
-    };
-
-    bgFolder
-      .addBinding(this.#environment_.customParams, "hdrTexture", {
-        options: {
-          "Autumn Field": "autumn_field_puresky_1k.hdr",
-          "Rosendal Park Sunset": "rosendal_park_sunset_1k.hdr",
-          "Zwartkops Sunset": "zwartkops_straight_sunset_1k.hdr",
-        },
-      })
-      .on("change", (evt) => {
-        this.LoadHDR_(`./skybox/${evt.value}`);
-      });
-    bgFolder.addBinding(this.Scene, "backgroundBlurriness", {
-      min: 0,
-      max: 1,
-      step: 0.01,
-    });
-    bgFolder.addBinding(this.Scene, "backgroundIntensity", {
-      min: 0,
-      max: 1,
-      step: 0.01,
-    });
-    bgFolder.addBinding(this.Scene, "environmentIntensity", {
-      min: 0,
-      max: 1,
-      step: 0.01,
-    });
-
-    this.LoadHDR_(`./skybox/${this.#environment_.customParams.hdrTexture}`);
   }
 
   async #setupCharacter_() {
@@ -273,6 +239,47 @@ class Project extends App {
       max: 3,
       step: 0.01,
     });
+  }
+
+  async #setupEnvironment_() {
+    const bgFolder = this.Pane.addFolder({ title: "Background" });
+    this.Scene.backgroundBlurriness = 0.4;
+    this.Scene.backgroundIntensity = 0.5;
+    this.Scene.environmentIntensity = 0.5;
+    this.#environment_.customParams = {
+      hdrTexture: "autumn_field_puresky_1k.hdr",
+    };
+
+    bgFolder
+      .addBinding(this.#environment_.customParams, "hdrTexture", {
+        options: {
+          "Autumn Field": "autumn_field_puresky_1k.hdr",
+          "Rosendal Park Sunset": "rosendal_park_sunset_1k.hdr",
+          "Zwartkops Sunset": "zwartkops_straight_sunset_1k.hdr",
+        },
+      })
+      .on("change", (evt) => {
+        this.LoadHDR_(`./skybox/${evt.value}`);
+      });
+    bgFolder.addBinding(this.Scene, "backgroundBlurriness", {
+      min: 0,
+      max: 1,
+      step: 0.01,
+    });
+    bgFolder.addBinding(this.Scene, "backgroundIntensity", {
+      min: 0,
+      max: 1,
+      step: 0.01,
+    });
+    bgFolder.addBinding(this.Scene, "environmentIntensity", {
+      min: 0,
+      max: 1,
+      step: 0.01,
+    });
+
+    await this.LoadHDR_(
+      `./skybox/${this.#environment_.customParams.hdrTexture}`
+    );
   }
 
   /**
