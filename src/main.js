@@ -1,75 +1,33 @@
 import * as THREE from "three";
-import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-import { Pane } from "tweakpane";
-import Stats from "three/addons/libs/Stats.module.js";
 
+import { App } from "./app.js";
 import { InputManager } from "./input-manager.js";
 import { ThirdPersonCamera } from "./third-person-camera.js";
 
-// for environments
-import { HDRLoader } from "three/addons/loaders/HDRLoader.js";
-// for models
-import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
-import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js";
-
-class App {
-  // Three "setup"
-  #three_ = null;
-  #camera_ = null;
-  #scene_ = null;
-  #clock_ = null;
-
+class Project extends App {
   // Scene
   #sun_ = null;
   #character_ = null;
   #characterGroup_ = null;
+
+  // Environment
   #environment_ = {};
 
   // Scene Controls
-  #controls_ = null;
   #inputs_ = null;
   #thirdCamera_ = null;
 
-  // Debug & Performance
-  #pane_ = null;
-  #stats_ = null;
-
-  constructor() {}
-
-  /**
-   * Starts the project
-   * - Runs setupProject
-   * - Starts the draw loop
-   */
-  async initialize() {
-    // clock param -> autostart
-    this.#clock_ = new THREE.Clock(true);
-
-    window.addEventListener("resize", () => {
-      this.#onResize_();
-    });
-
-    await this.#setupProject_();
-    // Call onResize to setup our initial dimensions
-    this.#onResize_();
-
-    // Start the draw loop
-    this.#raf_();
+  constructor() {
+    super();
   }
 
   /**
-   * Project setup
-   * - calls setupThree for setup
+   * Override for onSetupProject
    * - calls setupBasicScene to add to the scene
-   * - calls setupPane & Stats for debug/perf monitoring
    * - instantiates the InputManager class
+   * - instantiates the 3rd person camera
    */
-  async #setupProject_() {
-    // Debug & Performance
-    this.#setupPane_();
-    this.#setupStats_();
-
-    this.#setupThree_();
+  async onSetupProject() {
     this.#setupBasicScene_();
     await this.#setupCharacter_();
 
@@ -78,81 +36,7 @@ class App {
     this.#inputs_.initialize();
 
     // 3rd Person Camera
-    this.#setup3rdCamera_(this.#pane_);
-  }
-
-  #setupPane_() {
-    this.#pane_ = new Pane();
-  }
-
-  #setupStats_() {
-    this.#stats_ = new Stats();
-    // @TODO: consider three-perf lib
-    document.body.appendChild(this.#stats_.dom);
-  }
-
-  /**
-   * Sets up three - since we repeat code in onResize,
-   *  there's more abstracted to that function.
-   * - creates the renderer
-   * - creates canvas from renderer using window dims
-   * - establishes DPR and aspect ratio
-   * - sets up camera
-   * - creates empty scene
-   */
-  #setupThree_() {
-    // Set up renderer
-    this.#three_ = new THREE.WebGLRenderer({ antialias: true });
-    document.body.appendChild(this.#three_.domElement);
-    const w = window.innerWidth;
-    const h = window.innerHeight;
-    const aspect = w / h;
-
-    // Set up camera
-    const fov = 70;
-    const near = 0.1;
-    const far = 1000;
-
-    this.#camera_ = new THREE.PerspectiveCamera(fov, aspect, near, far);
-    this.#camera_.position.set(3, 2, 3);
-    this.#camera_.lookAt(new THREE.Vector3(0, 0, 0));
-
-    // Sets up orbit controls
-    this.#controls_ = new OrbitControls(this.#camera_, this.#three_.domElement);
-
-    this.#scene_ = new THREE.Scene();
-    this.#scene_.background = new THREE.Color(0x000000);
-
-    // Enable Shadows
-    // - enabling shadow map gives us the shadow
-    this.#three_.shadowMap.enabled = true;
-    this.#three_.shadowMap.type = THREE.PCFSoftShadowMap;
-    this.#three_.toneMapping = THREE.ACESFilmicToneMapping;
-  }
-
-  /**
-   * Handles resize event
-   * - recalculates the window dimensions and updates the canvas
-   * - then updates the camera based on the new aspect ratio
-   */
-  #onResize_() {
-    // Get current browser dimensions, calc aspect ratio
-    const w = window.innerWidth;
-    const h = window.innerHeight;
-    const dpr = window.devicePixelRatio;
-    const aspect = w / h;
-
-    // Update canvas dimensions w/ DPR
-    const canvas = this.#three_.domElement;
-    canvas.style.width = w + "px";
-    canvas.style.height = h + "px";
-
-    // Update renderer size
-    this.#three_.setSize(w * dpr, h * dpr, false);
-
-    // Update camera
-    this.#camera_.aspect = aspect;
-    this.#camera_.updateProjectionMatrix();
+    this.#setup3rdCamera_(this.Pane);
   }
 
   /**
@@ -174,12 +58,12 @@ class App {
     light.shadow.camera.bottom = -2;
     light.shadow.mapSize.set(2048, 2048);
     // Add the light to the scene
-    this.#scene_.add(light);
-    this.#scene_.add(light.target);
+    this.Scene.add(light);
+    this.Scene.add(light.target);
     this.#sun_ = light;
 
     // Add a light tweak pane folder
-    const lightFolder = this.#pane_.addFolder({ title: "Sunlight" });
+    const lightFolder = this.Pane.addFolder({ title: "Sunlight" });
     lightFolder.addBinding(this.#sun_, "color", {
       view: "color",
       color: { type: "float" },
@@ -204,12 +88,12 @@ class App {
     // Rotate the plane so it's horizontal
     groundMesh.rotation.x = -Math.PI / 2;
     groundMesh.receiveShadow = true;
-    this.#scene_.add(groundMesh);
+    this.Scene.add(groundMesh);
 
-    const bgFolder = this.#pane_.addFolder({ title: "Background" });
-    this.#scene_.backgroundBlurriness = 0.4;
-    this.#scene_.backgroundIntensity = 0.5;
-    this.#scene_.environmentIntensity = 0.5;
+    const bgFolder = this.Pane.addFolder({ title: "Background" });
+    this.Scene.backgroundBlurriness = 0.4;
+    this.Scene.backgroundIntensity = 0.5;
+    this.Scene.environmentIntensity = 0.5;
     this.#environment_.customParams = {
       hdrTexture: "autumn_field_puresky_1k.hdr",
     };
@@ -223,91 +107,31 @@ class App {
         },
       })
       .on("change", (evt) => {
-        this.#LoadHDR_(`./skybox/${evt.value}`);
+        this.LoadHDR_(`./skybox/${evt.value}`);
       });
-    bgFolder.addBinding(this.#scene_, "backgroundBlurriness", {
+    bgFolder.addBinding(this.Scene, "backgroundBlurriness", {
       min: 0,
       max: 1,
       step: 0.01,
     });
-    bgFolder.addBinding(this.#scene_, "backgroundIntensity", {
+    bgFolder.addBinding(this.Scene, "backgroundIntensity", {
       min: 0,
       max: 1,
       step: 0.01,
     });
-    bgFolder.addBinding(this.#scene_, "environmentIntensity", {
+    bgFolder.addBinding(this.Scene, "environmentIntensity", {
       min: 0,
       max: 1,
       step: 0.01,
     });
 
-    this.#LoadHDR_(`./skybox/${this.#environment_.customParams.hdrTexture}`);
-  }
-
-  #LoadHDR_(path) {
-    const rgbeLoader = new HDRLoader();
-    rgbeLoader.load(path, (hdrTexture) => {
-      hdrTexture.mapping = THREE.EquirectangularReflectionMapping;
-
-      this.#scene_.background = hdrTexture;
-      this.#scene_.environment = hdrTexture;
-    });
-  }
-
-  /**
-   *
-   * LoadGLB loads our GLB models async
-   * NOTE: because of this, we need to use await accordingly
-   *  and functions with await must have async
-   *  reminder that async functions are called with await in general
-   * @param {*} path
-   * @returns promise resolution
-   */
-  async #LoadGLB_(path) {
-    const loader = new GLTFLoader();
-    const dracoLoader = new DRACOLoader();
-    dracoLoader.setDecoderPath("./libs/draco/");
-    loader.setDRACOLoader(dracoLoader);
-
-    return new Promise((resolve, reject) => {
-      loader.load(path, (gltf) => {
-        resolve(gltf);
-        console.log("done");
-      });
-    });
-
-    // loader.load(
-    //   path,
-    //   (gltf) => {
-    //     console.log("Model loaded:", path);
-    //     console.log("Model scene:", gltf.scene);
-    //     gltf.scene.traverse((c) => {
-    //       if (c instanceof THREE.Mesh) {
-    //         c.castShadow = true;
-    //         c.receiveShadow = true;
-    //       }
-    //     });
-    //     // this.#scene_.add(gltf.scene);
-    //     model = gltf.scene;
-    //     console.log(`Model ${path} added to scene`);
-    //     return model;
-    //   },
-    //   (progress) => {
-    //     console.log(
-    //       "Loading progress:",
-    //       (progress.loaded / progress.total) * 100 + "%"
-    //     );
-    //   },
-    //   (error) => {
-    //     console.error("Error loading model:", error);
-    //   }
-    // );
+    this.LoadHDR_(`./skybox/${this.#environment_.customParams.hdrTexture}`);
   }
 
   async #setupCharacter_() {
     const charGroup = new THREE.Group();
 
-    const giraffe = await this.#LoadGLB_("./models/giraffe.glb");
+    const giraffe = await this.LoadGLB_("./models/giraffe.glb");
     giraffe.scene.traverse((c) => {
       if (c.isMesh) {
         c.castShadow = true;
@@ -356,7 +180,7 @@ class App {
 
     this.#character_ = giraffe.scene;
     this.#characterGroup_ = charGroup;
-    this.#scene_.add(charGroup);
+    this.Scene.add(charGroup);
 
     // Create a character tweak pane folder
     this.#character_.customParams = {
@@ -372,7 +196,7 @@ class App {
       rotFactor: 0.2,
     };
 
-    const charFolder = this.#pane_.addFolder({ title: "Character" });
+    const charFolder = this.Pane.addFolder({ title: "Character" });
     // NOTE: boolean params can just follow `addBinding(paramObject, paramProperty)`
     charFolder
       .addBinding(this.#character_.customParams, "wireframe")
@@ -461,7 +285,7 @@ class App {
       new THREE.Vector3(0, 1, -3),
       new THREE.Vector3(0, 1, 5),
       this.#characterGroup_,
-      this.#camera_,
+      this.Camera,
       pane
     );
   }
@@ -542,41 +366,15 @@ class App {
     this.#sun_.target.position.copy(this.#characterGroup_.position);
   }
 
-  /**
-   * Our render function
-   * - renders the scene
-   */
-  #render_() {
-    this.#three_.render(this.#scene_, this.#camera_);
-  }
-
-  /**
-   * Our raf loop to continuously draw
-   * - "similar" to the p5.draw() function
-   * - we're having the `stats` panel monitor each frame, it "wraps" the actions
-   * - we're repeatedly calling `step` to continuously update something
-   * - we're repeatedly rendering the scene to keep it up to date
-   */
-  #raf_() {
-    requestAnimationFrame((t) => {
-      this.#stats_.begin();
-
-      const elapsedTime = this.#clock_.getDelta();
-      // Updates within the draw cycle
-      // Note: we pass the delta time from the THREE clock as our elapsedTime value
-      this.#step_(elapsedTime);
-      this.#render_();
-
-      this.#stats_.end();
-
-      this.#raf_();
-    });
+  onStep(elapsedTime, totalElapsedTime) {
+    this.#updateCharacterMovement_(elapsedTime);
+    this.#updateCamera_(elapsedTime);
+    this.#updateSun_(elapsedTime);
   }
 }
 
-let APP_ = null;
+let APP_ = new Project();
 
 window.addEventListener("DOMContentLoaded", async () => {
-  APP_ = new App();
   await APP_.initialize();
 });
