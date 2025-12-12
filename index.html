@@ -3671,10 +3671,11 @@
       </div>
     </div>
     <div class="main-overlay">
+      <nav></nav>
       <!-- @TODO: add memories song, transition songs in/out based on section -->
       <!-- @TODO: add audio toggle for user interaction -->
       <!-- @TODO: style audio player/info -->
-      <audio class="audio" controls>
+      <audio class="audio" controls loop>
         <source
           src="public/sounds/Trust_the_process_wip1.mp3"
           type="audio/mpeg"
@@ -3682,7 +3683,11 @@
         Your browser does not support the audio element.
       </audio>
     </div>
-    <section class="masked-section masked-section--eight" data-masked-section>
+    <section
+      class="masked-section masked-section--eight"
+      data-masked-section
+      data-bg="hsl(223, 87%, 24%)"
+    >
       <div class="mask-container mask-container--g">
         <div id="notebook" class="notebook">
           <div class="slider">
@@ -4111,6 +4116,7 @@
     <section
       class="masked-section masked-section--hourglass"
       data-masked-section
+      data-bg="hsl(212, 98%, 80%);"
     >
       <div class="mask-container mask-container--hourglass">
         <canvas id="three"></canvas>
@@ -4119,6 +4125,7 @@
     <section
       class="masked-section masked-section--infinity"
       data-masked-section
+      data-bg="hsl(193, 82%, 32%)"
     >
       <div class="mask-container mask-container--infinity">
         <div class="outro">

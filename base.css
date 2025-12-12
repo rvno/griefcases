@@ -4,6 +4,14 @@
   padding: 0;
 }
 
+:root {
+  --theme: hsl(214deg 58% 90%);
+  --theme-g: hsl(223, 87%, 24%);
+  --theme-hourglass: hsl(212, 98%, 80%);
+  --theme-eight: hsl(206, 57%, 44%);
+  --theme-infinity: hsl(193, 82%, 32%);
+}
+
 html,
 body {
   width: 100%;
@@ -13,13 +21,41 @@ body {
 }
 
 body {
+  background-color: var(--theme);
   width: 100%;
   height: 100%;
   position: absolute;
   margin: 0;
   padding: 0;
+  transition: background-color 0.5s linear forwards;
   overscroll-behavior: none;
   overflow: hidden;
+  will-change: background;
+}
+
+@keyframes reveal-bg {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+section::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  /* Default to transparent, the animation will change opacity */
+  background-color: attr(data-bg);
+  animation: reveal-bg linear forwards;
+  /* This is the core of scroll-driven animation */
+  animation-timeline: view();
+  /* Animation range ensures it happens as the section enters the view */
+  animation-range: entry 0% cover 50%;
 }
 
 img {
@@ -37,6 +73,7 @@ img {
   align-items: center;
   justify-content: center;
   position: relative;
+  overflow: hidden;
 }
 
 .logo-container {
@@ -463,6 +500,7 @@ section {
 /* tweakpane */
 .tp-dfwv {
   position: fixed !important;
+  z-index: 11;
 }
 
 /* masked sections */
@@ -471,15 +509,15 @@ section {
 }
 
 .masked-section--hourglass {
-  background-color: #9bc9fe;
+  /* background-color: #9bc9fe; */
 }
 
 .masked-section--eight {
-  background-color: #3077ae;
+  /* background-color: #3077ae; */
 }
 
 .masked-section--infinity {
-  background-color: #0f7794;
+  /* background-color: #0f7794; */
 }
 
 .mask-container {
