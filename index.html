@@ -3670,8 +3670,10 @@
         </div>
       </div>
     </div>
-    <section id="notebook" class="sticky">
-      <div class="slider">
+    <section class="masked-section" data-masked-section>
+      <div class="mask-container mask-container--g">
+        <div id="notebook" class="notebook">
+          <div class="slider">
         <div class="slides">
           <div class="slide">
             <div class="grid">
@@ -4090,12 +4092,23 @@
           </div>
         </div>
       </div>
+        </div>
+      </div>
     </section>
-    <section class="outro">
-      <h1>Venture Onward</h1>
+    <section class="masked-section" data-masked-section>
+      <div class="mask-container mask-container--g">
+        <div class="outro">
+          <h1>Venture Onward</h1>
+        </div>
+      </div>
     </section>
-    <canvas id="three"></canvas>
+    <section class="masked-section" data-masked-section>
+      <div class="mask-container mask-container--hourglass">
+        <canvas id="three"></canvas>
+      </div>
+    </section>
 
+    <script src="./src/mask-reveal.js" type="module"></script>
     <script src="./src/notebook.js" type="module"></script>
     <script src="./src/main.js" type="module"></script>
   </body>

@@ -1,5 +1,3 @@
-import Lenis from "lenis";
-import "lenis/dist/lenis.css";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 // import { DrawSVGPlugin } from "gsap/DrawSVGPlugin";
@@ -8,41 +6,16 @@ document.addEventListener("DOMContentLoaded", () => {
   gsap.registerPlugin(ScrollTrigger);
   // gsap.registerPlugin(DrawSVGPlugin);
 
-  // const scripts = document.querySelectorAll(".handwritten path");
-  // scripts.forEach((script, index) => {
-  //   gsap.fromTo(
-  //     script,
-  //     { drawSVG: 0 },
-  //     {
-  //       drawSVG: "100%",
-  //       duration: 1.5,
-  //       delay: index * 0.3,
-  //       ease: "power2.inOut",
-  //     }
-  //   );
-  // });
+  // NOTE: Lenis is initialized in mask-reveal.js
+  // We don't create a second instance to avoid scroll conflicts
 
-  const lenis = new Lenis({
-    duration: 1.2,
-    easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-    smooth: true,
-  });
-
-  lenis.on("scroll", ScrollTrigger.update);
-
-  gsap.ticker.add((time) => {
-    lenis.raf(time * 1000);
-  });
-
-  gsap.ticker.lagSmoothing(0);
-
-  const stickySection = document.querySelector(".sticky");
+  const stickySection = document.querySelector(".notebook");
   const slidesContainer = document.querySelector(".slides");
   const slider = document.querySelector(".slider");
   const slides = document.querySelectorAll(".slide");
   const revealImages = document.querySelectorAll(".masked-image");
 
-  const stickyHeight = window.innerHeight * 6;
+  const stickyHeight = window.innerHeight * 10;
   const totalMove = slidesContainer.offsetWidth - slider.offsetWidth;
   const slideWidth = slider.offsetWidth;
 
@@ -108,20 +81,62 @@ document.addEventListener("DOMContentLoaded", () => {
 
   slides.forEach((slide) => observer.observe(slide));
 
-  ScrollTrigger.create({
-    trigger: stickySection,
-    start: "top top",
-    end: `+=${stickyHeight}px`,
-    scrub: 1,
-    pin: true,
-    pinSpacing: true,
-    onUpdate: (self) => {
-      const progress = self.progress;
-      const mainMove = progress * totalMove;
+  // Check if notebook is wrapped in a masked-section
+  const parentMaskedSection = stickySection.closest(".masked-section");
 
-      gsap.set(slidesContainer, {
-        x: -mainMove,
-      });
-    },
-  });
+  if (parentMaskedSection) {
+    // COORDINATED MODE: Mask reveal happens first, then horizontal scroll
+    // The parent masked-section handles pinning (total duration: 10vh)
+    // Mask reveal: 0-20% (2vh) - from mask-reveal.js config
+    // Horizontal scroll: 20-100% (8vh) - starts after mask is fully revealed
+    ScrollTrigger.create({
+      trigger: parentMaskedSection,
+      start: "top top",
+      end: `+=${stickyHeight}px`,
+      scrub: 1,
+      pin: false, // Pinning is handled by mask-reveal.js on the parent
+      pinSpacing: false,
+      invalidateOnRefresh: true,
+      onUpdate: (self) => {
+        const progress = self.progress;
+
+        // Horizontal scroll only animates after mask reveal is complete (after 20% progress)
+        const maskRevealEnd = 0.2; // Must match maskEndProgress in mask-reveal.js
+
+        if (progress > maskRevealEnd) {
+          // Remap progress from [0.2, 1.0] to [0, 1] for smooth horizontal scroll
+          const scrollProgress =
+            (progress - maskRevealEnd) / (1 - maskRevealEnd);
+          const mainMove = scrollProgress * totalMove;
+
+          gsap.set(slidesContainer, {
+            x: -mainMove,
+          });
+        } else {
+          // Keep slides at starting position during mask reveal
+          gsap.set(slidesContainer, {
+            x: 0,
+          });
+        }
+      },
+    });
+  } else {
+    // STANDALONE MODE: Notebook handles its own pinning
+    ScrollTrigger.create({
+      trigger: stickySection,
+      start: "top top",
+      end: `+=${stickyHeight}px`,
+      scrub: 1,
+      pin: true,
+      pinSpacing: true,
+      onUpdate: (self) => {
+        const progress = self.progress;
+        const mainMove = progress * totalMove;
+
+        gsap.set(slidesContainer, {
+          x: -mainMove,
+        });
+      },
+    });
+  }
 });

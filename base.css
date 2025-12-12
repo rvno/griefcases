@@ -66,16 +66,19 @@ img {
 section {
   position: relative;
   width: 100vw;
-  height: 100vh;
+  height: 100svh;
+  background-color: #000;
   overflow: hidden;
 }
 
-section.outro {
+.outro {
   background-color: #1e9e6b;
   display: flex;
   justify-content: center;
   align-items: center;
   text-align: center;
+  width: 100vw;
+  height: 100svh;
 }
 
 .outro h1 {
@@ -88,11 +91,12 @@ section.outro {
   line-height: 0.9;
 }
 
-section.sticky {
+.notebook {
   /* background-color: #b4aea7; */
   /* paper bg */
   background-image: url("public/imgs/paper-texture.webp");
   background-size: cover;
+  height: 100%;
 }
 
 .slider {
@@ -459,4 +463,48 @@ section.sticky {
 /* tweakpane */
 .tp-dfwv {
   position: fixed !important;
+}
+
+/* masked sections */
+.masked-section {
+  position: relative;
+}
+
+.mask-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100svh;
+  overflow: hidden;
+  -webkit-mask-size: 0%;
+  mask-size: 0%;
+  z-index: 10;
+  opacity: 0;
+  transition: opacity 0.1s;
+}
+
+.mask-container.active {
+  opacity: 1;
+}
+
+.mask-container--eight {
+  -webkit-mask: url("public/masks/black-8.svg") center no-repeat;
+  mask: url("public/masks/black-8.svg") center no-repeat;
+}
+
+.mask-container--g {
+  -webkit-mask: url("public/masks/black-g.svg") center no-repeat;
+  mask: url("public/masks/black-g.svg") center no-repeat;
+}
+
+.mask-container--hourglass {
+  -webkit-mask: url("public/masks/black-hourglass.svg") center no-repeat;
+  mask: url("public/masks/black-hourglass.svg") center no-repeat;
+}
+
+.mask-container--infinity {
+  -webkit-mask: url("public/masks/black-infinity-leash-solid.svg") center
+    no-repeat;
+  mask: url("public/masks/black-infinity-leash-solid.svg") center no-repeat;
 }
