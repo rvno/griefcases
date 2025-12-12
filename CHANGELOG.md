@@ -41,3 +41,6 @@
   - **Color Uniforms**: Replaced hardcoded `BLUE` and `ORANGE` shader constants with `color1` and `color2` uniforms (depth-test-fsh.glsl:11-12, 101, 116). JavaScript initializes these as `THREE.Vector3` values (main.js:232-233) and Tweakpane color pickers update them in real-time (main.js:295-311).
 
   - **Tweakpane Integration**: Added "Forcefield" folder with scale slider (0.1-10.0) and two color pickers, allowing real-time adjustment of all visual properties while maintaining proper fade behavior at any scale.
+
+- Critical performance optimizations
+  - **Optimized Bloom Pass**: Reduced bloom mipmap levels from 4 to 3 (bloomPass.js:204), cutting render passes from 10 to 7 per frame. Removed redundant copy-to-writeBuffer pass (bloomPass.js:343-345), reducing bloom overhead by ~2-3ms per frame. (Per Claude)

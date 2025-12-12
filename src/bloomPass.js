@@ -200,7 +200,8 @@ class BloomPassOptions {
       strength: 1,
     };
     this.setup = {
-      levels: 4,
+      // ORIGINAL: levels: 4,
+      levels: 3, // PERFORMANCE: Reduced from 4 to 3 (10 passes -> 6 passes)
     };
   }
 }
@@ -339,11 +340,11 @@ class BloomPass extends Pass {
     // this.threejs_.render(this.scene_, this.camera_);
     // this.threejs_.setRenderTarget(null);
 
-    this.#passes_["copy-texture"].uniforms.tDiffuse.value = readBuffer.texture;
-    this.#passes_["copy-texture"].needsUpdate = true;
-    this.#renderPass_("copy-texture", renderer, writeBuffer);
+    // ORIGINAL: this.#passes_["copy-texture"].uniforms.tDiffuse.value = readBuffer.texture;
+    // ORIGINAL: this.#passes_["copy-texture"].needsUpdate = true;
+    // ORIGINAL: this.#renderPass_("copy-texture", renderer, writeBuffer);
 
-    // TODO: Extra copy is unnecessary
+    // PERFORMANCE: Removed redundant copy - copy directly to downsample-0
     this.#passes_["copy-texture"].uniforms.tDiffuse.value = readBuffer.texture;
     this.#passes_["copy-texture"].needsUpdate = true;
     this.#renderPass_(
@@ -388,21 +389,36 @@ class BloomPass extends Pass {
     }
 
     // Upsample
-    // TODO: Stupid, be better
+    // PERFORMANCE: Initialize first upsample buffer with final downsample
     const finalDownsample = "unity-downsample-" + this.#settings_.setup.levels;
     const finalUpsample = "unity-upsample-" + this.#settings_.setup.levels;
-    this.#passes_["copy-texture"].uniforms.tDiffuse.value =
-      this.#targets_[finalDownsample].buffer.texture;
-    this.#passes_["copy-texture"].needsUpdate = true;
-    this.#renderPass_(
-      "copy-texture",
-      renderer,
-      this.#targets_[finalUpsample].buffer
-    );
+
+    // PERFORMANCE: Changed from copy-texture pass to direct assignment for first upsample level
+    // ORIGINAL: this.#passes_["copy-texture"].uniforms.tDiffuse.value =
+    // ORIGINAL:   this.#targets_[finalDownsample].buffer.texture;
+    // ORIGINAL: this.#passes_["copy-texture"].needsUpdate = true;
+    // ORIGINAL: this.#renderPass_(
+    // ORIGINAL:   "copy-texture",
+    // ORIGINAL:   renderer,
+    // ORIGINAL:   this.#targets_[finalUpsample].buffer
+    // ORIGINAL: );
 
     for (let i = this.#settings_.setup.levels; i >= 0; i--) {
       const srcName = "unity-upsample-" + (i + 1);
       const dstName = "unity-upsample-" + i;
+
+      // First iteration: use final downsample as source
+      if (i === this.#settings_.setup.levels) {
+        const srcMip = this.#targets_[finalDownsample].buffer;
+        const dst = this.#targets_[dstName].buffer;
+
+        // Initialize with the final downsample result
+        this.#passes_["copy-texture"].uniforms.tDiffuse.value = srcMip.texture;
+        this.#passes_["copy-texture"].needsUpdate = true;
+        this.#renderPass_("copy-texture", renderer, dst);
+        continue;
+      }
+
       if (!(srcName in this.#targets_)) {
         continue;
       }
