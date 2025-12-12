@@ -44,3 +44,17 @@
 
 - Critical performance optimizations
   - **Optimized Bloom Pass**: Reduced bloom mipmap levels from 4 to 3 (bloomPass.js:204), cutting render passes from 10 to 7 per frame. Removed redundant copy-to-writeBuffer pass (bloomPass.js:343-345), reducing bloom overhead by ~2-3ms per frame. (Per Claude)
+
+## 12-12-24
+
+- Refactored forcefield system for reusability and multi-instance support
+
+  - **Material Instancing**: Created base forcefield material (`#forceFieldBaseMaterial_`) that is cloned for each model instance. Each clone maintains independent fade values while sharing depth and pattern textures. Color uniforms are updated across all instances via Tweakpane callbacks (main.js:359-381).
+
+  - **Texture Integration**: Replaced solid colors with KTX2 texture pattern (`placeholder-paw.ktx2`) applied to forcefield shader (main.js:326). Texture is shared across all forcefield instances to minimize memory usage.
+
+  - **Reusable Forcefield Factory**: Abstracted forcefield creation into `#createForceFieldForModel_()` method that automatically generates properly-sized and positioned forcefields for any model/object. Function calculates world-space bounding box via `Box3.setFromObject()` to account for model transforms and scale.
+
+  - **Bounding Box-Based Positioning**: Fixed positioning issue for scaled models by using bounding box center instead of model pivot point. Critical for models with non-centered pivots (e.g., turtle model at scale 0.37) - ensures forcefield encapsulates visible geometry regardless of local transforms or pivot placement. Fade calculations also use bounding box center for accurate vertical alignment.
+
+  - **Shared Texture References**: After cloning ShaderMaterial, depth texture and pattern texture are explicitly re-assigned since `clone()`creates new uniform objects rather than preserving texture references.

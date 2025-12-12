@@ -27,6 +27,8 @@ class Project extends App {
   #depthCopyMaterial_ = null;
   #colourCopyMaterial_ = null;
   #transparentScene_ = null;
+  #forceFieldBaseMaterial_ = null;
+  #forceFieldMaterials_ = [];
 
   #viewScene_ = null;
   #viewCamera_ = null;
@@ -45,6 +47,7 @@ class Project extends App {
   async onSetupProject() {
     await this.#setupEnvironment_();
     await this.#setupDepth_();
+    await this.#setupForceFieldMaterial_();
 
     await this.#setupBasicScene_();
 
@@ -122,111 +125,7 @@ class Project extends App {
     cube.receivehadow = true;
     cube.castShadow = true;
     this.addToScene(cube);
-    // create a forcefield thing
-    const forceFieldMaterial = await this.LoadShader_("depth-test", {
-      depthTexture: { value: this.#depthCopy_.texture },
-      cameraNearFar: {
-        value: new THREE.Vector2(this.Camera.near, this.Camera.far),
-      },
-      resolution: {
-        value: new THREE.Vector2(window.innerWidth, window.innerHeight),
-      },
-      // map is the texture we're applying to the shader
-      map: {
-        value: await this.loadTexture("./textures/circle.ktx2", true),
-      },
-      time: { value: 0 },
-      fadeTop: { value: 0.0 },
-      fadeBottom: { value: 0.0 },
-      color1: { value: new THREE.Vector3(0.0, 0.0, 1.0) }, // Blue
-      color2: { value: new THREE.Vector3(1.0, 0.5, 0.0) }, // Orange
-    });
-
-    forceFieldMaterial.uniforms.map.value.wrapS = THREE.RepeatWrapping;
-    forceFieldMaterial.uniforms.map.value.wrapT = THREE.RepeatWrapping;
-    forceFieldMaterial.transparent = true;
-    forceFieldMaterial.side = THREE.DoubleSide;
-    forceFieldMaterial.depthTest = true;
-    forceFieldMaterial.depthWrite = false;
-    forceFieldMaterial.blending = THREE.AdditiveBlending;
-
-    const forceField = new THREE.Mesh(cubeGeometry, forceFieldMaterial);
-    const forceFieldScale = 1.5;
-    forceField.scale.setScalar(forceFieldScale);
-    forceField.position.copy(cube.position);
-
-    // Calculate fade bounds based on forcefield dimensions
-    // Get the geometry's bounding box to find actual dimensions
-    cubeGeometry.computeBoundingBox();
-    const bbox = cubeGeometry.boundingBox;
-    const geometryHeight = bbox.max.y - bbox.min.y;
-
-    // Calculate world-space height after scaling
-    const worldHeight = geometryHeight * forceFieldScale;
-    const halfHeight = worldHeight / 2;
-
-    // Fade happens only in the last 25% from the top
-    // Top of forcefield is at: cube.position.y + halfHeight
-    // 75% height (where fade starts): cube.position.y + halfHeight - (worldHeight * 0.75)
-    const topOfField = cube.position.y + halfHeight;
-    const fadeStartHeight = worldHeight * 0.25; // 25% of total height
-
-    forceFieldMaterial.uniforms.fadeTop.value = topOfField;
-    forceFieldMaterial.uniforms.fadeBottom.value = topOfField - fadeStartHeight;
-
-    this.#transparentScene_.add(forceField);
-
-    // Create forcefield tweak pane folder
-    const forceFieldFolder = this.Pane.addFolder({ title: "Forcefield" });
-
-    // Custom params for tweakpane
-    const forceFieldParams = {
-      scale: forceFieldScale,
-      color1: { r: 0.0, g: 0.0, b: 1.0 },
-      color2: { r: 1.0, g: 0.5, b: 0.0 },
-    };
-
-    forceFieldFolder
-      .addBinding(forceFieldParams, "scale", { min: 0.1, max: 10.0, step: 0.1 })
-      .on("change", (evt) => {
-        forceField.scale.setScalar(evt.value);
-
-        // Recalculate fade bounds based on new scale
-        const newWorldHeight = geometryHeight * evt.value;
-        const newHalfHeight = newWorldHeight / 2;
-        const newTopOfField = cube.position.y + newHalfHeight;
-        const newFadeStartHeight = newWorldHeight * 0.25;
-
-        forceFieldMaterial.uniforms.fadeTop.value = newTopOfField;
-        forceFieldMaterial.uniforms.fadeBottom.value =
-          newTopOfField - newFadeStartHeight;
-      });
-
-    forceFieldFolder
-      .addBinding(forceFieldParams, "color1", {
-        view: "color",
-        color: { type: "float" },
-      })
-      .on("change", (evt) => {
-        forceFieldMaterial.uniforms.color1.value.set(
-          evt.value.r,
-          evt.value.g,
-          evt.value.b
-        );
-      });
-
-    forceFieldFolder
-      .addBinding(forceFieldParams, "color2", {
-        view: "color",
-        color: { type: "float" },
-      })
-      .on("change", (evt) => {
-        forceFieldMaterial.uniforms.color2.value.set(
-          evt.value.r,
-          evt.value.g,
-          evt.value.b
-        );
-      });
+    this.#createForceFieldForModel_(cube);
 
     // load turtle
 
@@ -257,6 +156,7 @@ class Project extends App {
       turtleParams.rotation.z
     );
     this.Scene.add(turtle.scene);
+    this.#createForceFieldForModel_(turtle.scene);
     this.#objects_.push({ name: "turtle", mesh: turtle.scene });
     this.#createModelBinding_("turtle", turtle.scene, this.Pane, turtleParams);
   }
@@ -278,6 +178,129 @@ class Project extends App {
       const currentValue = evt.value;
       model.rotation.set(evt.value.x, evt.value.y, evt.value.z);
     });
+  }
+
+  #createForceFieldForModel_(model) {
+    // Clone the base material so each forcefield can have independent fade values
+    const forceFieldMaterial = this.#forceFieldBaseMaterial_.clone();
+
+    // NOTE: After cloning, we must re-assign shared texture references
+    // ShaderMaterial.clone() creates new uniform objects, but we need these specific textures
+    // to be shared across all instances (depth buffer and pattern texture)
+    forceFieldMaterial.uniforms.depthTexture.value = this.#depthCopy_.texture;
+    forceFieldMaterial.uniforms.map.value = this.#forceFieldBaseMaterial_.uniforms.map.value;
+
+    // Add to array so we can update all materials when Tweakpane changes colors
+    this.#forceFieldMaterials_.push(forceFieldMaterial);
+
+    // Get the world-space bounding box (includes model's scale and transforms)
+    const modelBox3 = new THREE.Box3();
+    modelBox3.setFromObject(model);
+    const center = new THREE.Vector3();
+    const size = new THREE.Vector3();
+    modelBox3.getCenter(center);
+    modelBox3.getSize(size);
+    const modelHeight = size.y;
+
+    // Create forcefield geometry matching the world-space size
+    const forceFieldGeo = new THREE.BoxGeometry(size.x, size.y, size.z);
+
+    const forceField = new THREE.Mesh(forceFieldGeo, forceFieldMaterial);
+    const forceFieldScale = 1.5;
+    forceField.scale.setScalar(forceFieldScale);
+
+    // NOTE: Use bounding box center instead of model.position for positioning
+    // This is critical for models with non-centered pivots or scaled transforms.
+    // For example, the turtle model (scale 0.37, position y: -1.15) has a pivot that
+    // doesn't align with its visual center. Using the bounding box center ensures
+    // the forcefield properly encapsulates the visible geometry regardless of
+    // the model's pivot point or local transforms.
+    forceField.position.copy(center);
+
+    // Calculate world-space height after scaling
+    const worldHeight = modelHeight * forceFieldScale;
+    const halfHeight = worldHeight / 2;
+
+    // Fade happens only in the last 25% from the top
+    // NOTE: Using center.y ensures fade aligns with the actual geometry,
+    // not the model's pivot point
+    const topOfField = center.y + halfHeight;
+    const fadeStartHeight = worldHeight * 0.25; // 25% of total height
+
+    forceFieldMaterial.uniforms.fadeTop.value = topOfField;
+    forceFieldMaterial.uniforms.fadeBottom.value = topOfField - fadeStartHeight;
+
+    this.#transparentScene_.add(forceField);
+  }
+
+  async #setupForceFieldMaterial_() {
+    // Create the base forcefield material that will be shared across all forcefields
+    this.#forceFieldBaseMaterial_ = await this.LoadShader_("depth-test", {
+      depthTexture: { value: this.#depthCopy_.texture },
+      cameraNearFar: {
+        value: new THREE.Vector2(this.Camera.near, this.Camera.far),
+      },
+      resolution: {
+        value: new THREE.Vector2(window.innerWidth, window.innerHeight),
+      },
+      map: {
+        value: await this.loadTexture("./textures/placeholder-paw.ktx2", true),
+      },
+      time: { value: 0 },
+      fadeTop: { value: 0.0 },
+      fadeBottom: { value: 0.0 },
+      color1: { value: new THREE.Vector3(0.0, 0.0, 1.0) }, // Blue
+      color2: { value: new THREE.Vector3(1.0, 0.5, 0.0) }, // Orange
+    });
+
+    this.#forceFieldBaseMaterial_.uniforms.map.value.wrapS = THREE.RepeatWrapping;
+    this.#forceFieldBaseMaterial_.uniforms.map.value.wrapT = THREE.RepeatWrapping;
+    this.#forceFieldBaseMaterial_.transparent = true;
+    this.#forceFieldBaseMaterial_.side = THREE.DoubleSide;
+    this.#forceFieldBaseMaterial_.depthTest = true;
+    this.#forceFieldBaseMaterial_.depthWrite = false;
+    this.#forceFieldBaseMaterial_.blending = THREE.AdditiveBlending;
+
+    // Create forcefield tweak pane folder
+    const forceFieldFolder = this.Pane.addFolder({ title: "Forcefield" });
+
+    // Custom params for tweakpane
+    const forceFieldParams = {
+      color1: { r: 0.0, g: 0.0, b: 1.0 },
+      color2: { r: 1.0, g: 0.5, b: 0.0 },
+    };
+
+    forceFieldFolder
+      .addBinding(forceFieldParams, "color1", {
+        view: "color",
+        color: { type: "float" },
+      })
+      .on("change", (evt) => {
+        // Update all forcefield materials
+        this.#forceFieldMaterials_.forEach((material) => {
+          material.uniforms.color1.value.set(
+            evt.value.r,
+            evt.value.g,
+            evt.value.b
+          );
+        });
+      });
+
+    forceFieldFolder
+      .addBinding(forceFieldParams, "color2", {
+        view: "color",
+        color: { type: "float" },
+      })
+      .on("change", (evt) => {
+        // Update all forcefield materials
+        this.#forceFieldMaterials_.forEach((material) => {
+          material.uniforms.color2.value.set(
+            evt.value.r,
+            evt.value.g,
+            evt.value.b
+          );
+        });
+      });
   }
 
   async #setupDepth_() {
