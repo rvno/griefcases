@@ -122,7 +122,6 @@ class Project extends App {
     cube.receivehadow = true;
     cube.castShadow = true;
     this.addToScene(cube);
-
     // create a forcefield thing
     const forceFieldMaterial = await this.LoadShader_("depth-test", {
       depthTexture: { value: this.#depthCopy_.texture },
@@ -152,7 +151,7 @@ class Project extends App {
     forceFieldMaterial.blending = THREE.AdditiveBlending;
 
     const forceField = new THREE.Mesh(cubeGeometry, forceFieldMaterial);
-    const forceFieldScale = 2;
+    const forceFieldScale = 1.5;
     forceField.scale.setScalar(forceFieldScale);
     forceField.position.copy(cube.position);
 
@@ -242,14 +241,20 @@ class Project extends App {
     // @TODO: need to adjust model pivot point in Blender
     // turtle.scene.scale.setScalar(0.5);
     const turtleParams = {
-      scalar: 1,
-      position: { x: -3, y: -2.75, z: 4 },
-      rotation: { x: 0, y: 0, z: 0 },
+      scalar: 0.37,
+      position: { x: -3, y: -1.15, z: 4 },
+      rotation: { x: -0.05, y: 0, z: 0 },
     };
     turtle.scene.position.set(
       turtleParams.position.x,
       turtleParams.position.y,
       turtleParams.position.z
+    );
+    turtle.scene.scale.setScalar(turtleParams.scalar);
+    turtle.scene.rotation.set(
+      turtleParams.rotation.x,
+      turtleParams.rotation.y,
+      turtleParams.rotation.z
     );
     this.Scene.add(turtle.scene);
     this.#objects_.push({ name: "turtle", mesh: turtle.scene });
@@ -551,10 +556,35 @@ class Project extends App {
     this.Scene.backgroundBlurriness = 0.4;
     this.Scene.backgroundIntensity = 0.5;
     this.Scene.environmentIntensity = 0.5;
+
+    // @TODO: custom shader fog for better performance and height/wave control
     this.#environment_.customParams = {
+      fogColor: new THREE.Color(0.34, 0.38, 0.71),
+      fogDensity: 0.13,
       hdrTexture: "autumn_field_puresky_1k.hdr",
     };
+    this.Scene.fog = new THREE.FogExp2(
+      this.#environment_.customParams.fogColor,
+      this.#environment_.customParams.fogDensity
+    );
 
+    bgFolder
+      .addBinding(this.#environment_.customParams, "fogColor", {
+        view: "color",
+        color: { type: "float" },
+      })
+      .on("change", (evt) => {
+        this.Scene.fog.color.set(evt.value.r, evt.value.g, evt.value.b);
+      });
+    bgFolder
+      .addBinding(this.#environment_.customParams, "fogDensity", {
+        min: 0,
+        max: 1,
+        step: 0.001,
+      })
+      .on("change", (evt) => {
+        this.Scene.fog.density = evt.value;
+      });
     bgFolder
       .addBinding(this.#environment_.customParams, "hdrTexture", {
         options: {
