@@ -138,7 +138,6 @@ class Project extends App {
       }
     });
     // @TODO: need to adjust model pivot point in Blender
-    // turtle.scene.scale.setScalar(0.5);
     const turtleParams = {
       scalar: 0.37,
       position: { x: -3, y: -1.15, z: 4 },
@@ -156,9 +155,13 @@ class Project extends App {
       turtleParams.rotation.z
     );
     this.Scene.add(turtle.scene);
-    this.#createForceFieldForModel_(turtle.scene);
-    this.#objects_.push({ name: "turtle", mesh: turtle.scene });
+    const forcefield = this.#createForceFieldForModel_(turtle.scene);
     this.#createModelBinding_("turtle", turtle.scene, this.Pane, turtleParams);
+    this.#objects_.push({
+      name: "turtle",
+      mesh: turtle.scene,
+      forcefield: forcefield,
+    });
   }
 
   #createModelBinding_(name, model, pane, params) {
@@ -188,7 +191,8 @@ class Project extends App {
     // ShaderMaterial.clone() creates new uniform objects, but we need these specific textures
     // to be shared across all instances (depth buffer and pattern texture)
     forceFieldMaterial.uniforms.depthTexture.value = this.#depthCopy_.texture;
-    forceFieldMaterial.uniforms.map.value = this.#forceFieldBaseMaterial_.uniforms.map.value;
+    forceFieldMaterial.uniforms.map.value =
+      this.#forceFieldBaseMaterial_.uniforms.map.value;
 
     // Add to array so we can update all materials when Tweakpane changes colors
     this.#forceFieldMaterials_.push(forceFieldMaterial);
@@ -253,8 +257,10 @@ class Project extends App {
       color2: { value: new THREE.Vector3(1.0, 0.5, 0.0) }, // Orange
     });
 
-    this.#forceFieldBaseMaterial_.uniforms.map.value.wrapS = THREE.RepeatWrapping;
-    this.#forceFieldBaseMaterial_.uniforms.map.value.wrapT = THREE.RepeatWrapping;
+    this.#forceFieldBaseMaterial_.uniforms.map.value.wrapS =
+      THREE.RepeatWrapping;
+    this.#forceFieldBaseMaterial_.uniforms.map.value.wrapT =
+      THREE.RepeatWrapping;
     this.#forceFieldBaseMaterial_.transparent = true;
     this.#forceFieldBaseMaterial_.side = THREE.DoubleSide;
     this.#forceFieldBaseMaterial_.depthTest = true;
@@ -657,16 +663,17 @@ class Project extends App {
 
   /**
    *
+   * NOTE: we don't use this anymore since we use onStep - our overrideable function from APP
    * Our "tick" function
    * - what we're doing every frame
    * - we're essentially invoking other functions that handle the logic for different respective elements
    * @param {*} elapsedTime
    */
-  #step_(elapsedTime) {
-    this.#updateCharacterMovement_(elapsedTime);
-    this.#updateCamera_(elapsedTime);
-    this.#updateSun_(elapsedTime);
-  }
+  // #step_(elapsedTime) {
+  //   this.#updateCharacterMovement_(elapsedTime);
+  //   this.#updateCamera_(elapsedTime);
+  //   this.#updateSun_(elapsedTime);
+  // }
 
   /**
    * Utilizes InputManager to update/handle the character movement logic

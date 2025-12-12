@@ -208,9 +208,6 @@ section.sticky {
   object-fit: cover;
 }
 
-.masked-image__image {
-}
-
 .masked-image--revealed {
   animation: reveal 0.5s steps(6) 0s 1 normal forwards running;
 
