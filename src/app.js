@@ -352,8 +352,8 @@ class App {
 
     return new Promise((resolve, reject) => {
       loader.load(path, (gltf) => {
-        resolve(gltf);
-        console.log("done");
+        resolve(gltf.scene);
+        // console.log("done");
       });
     });
 

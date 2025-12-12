@@ -130,7 +130,7 @@ class Project extends App {
     // load turtle
 
     const turtle = await this.LoadGLB_("./models/turtle.glb");
-    turtle.scene.traverse((c) => {
+    turtle.traverse((c) => {
       if (c.isMesh) {
         c.castShadow = true;
         c.receiveShadow = true;
@@ -143,23 +143,23 @@ class Project extends App {
       position: { x: -3, y: -1.15, z: 4 },
       rotation: { x: -0.05, y: 0, z: 0 },
     };
-    turtle.scene.position.set(
+    turtle.position.set(
       turtleParams.position.x,
       turtleParams.position.y,
       turtleParams.position.z
     );
-    turtle.scene.scale.setScalar(turtleParams.scalar);
-    turtle.scene.rotation.set(
+    turtle.scale.setScalar(turtleParams.scalar);
+    turtle.rotation.set(
       turtleParams.rotation.x,
       turtleParams.rotation.y,
       turtleParams.rotation.z
     );
-    this.Scene.add(turtle.scene);
-    const forcefield = this.#createForceFieldForModel_(turtle.scene);
-    this.#createModelBinding_("turtle", turtle.scene, this.Pane, turtleParams);
+    this.Scene.add(turtle);
+    const forcefield = this.#createForceFieldForModel_(turtle);
+    this.#createModelBinding_("turtle", turtle, this.Pane, turtleParams);
     this.#objects_.push({
       name: "turtle",
-      mesh: turtle.scene,
+      mesh: turtle,
       forcefield: forcefield,
     });
   }
@@ -437,7 +437,7 @@ class Project extends App {
     const charGroup = new THREE.Group();
 
     const giraffe = await this.LoadGLB_("./models/giraffe.glb");
-    giraffe.scene.traverse((c) => {
+    giraffe.traverse((c) => {
       if (c.isMesh) {
         c.castShadow = true;
         c.receiveShadow = true;
@@ -445,8 +445,8 @@ class Project extends App {
       }
     });
     // @TODO: need to adjust model pivot point in Blender
-    giraffe.scene.scale.setScalar(0.5);
-    giraffe.scene.position.set(0, -1, 0);
+    giraffe.scale.setScalar(0.5);
+    giraffe.position.set(0, -1, 0);
 
     // capsule character placeholder mesh
     // const charGeo = new THREE.CapsuleGeometry(0.5, 0.5, 10, 20);
@@ -478,12 +478,12 @@ class Project extends App {
 
     // Assemble character parts
     // charGroup.add(char);
-    charGroup.add(giraffe.scene);
+    charGroup.add(giraffe);
     charGroup.add(boxMesh1);
     charGroup.add(boxMesh2);
     charGroup.add(boxMesh3);
 
-    this.#character_ = giraffe.scene;
+    this.#character_ = giraffe;
     this.#characterGroup_ = charGroup;
     this.Scene.add(charGroup);
 
