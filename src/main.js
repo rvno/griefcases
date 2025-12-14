@@ -253,8 +253,8 @@ class Project extends App {
       time: { value: 0 },
       fadeTop: { value: 0.0 },
       fadeBottom: { value: 0.0 },
-      color1: { value: new THREE.Vector3(0.0, 0.0, 1.0) }, // Blue
-      color2: { value: new THREE.Vector3(1.0, 0.5, 0.0) }, // Orange
+      color1: { value: new THREE.Vector3(0.02, 0.11, 0.2) },
+      color2: { value: new THREE.Vector3(0.03, 0.21, 0.44) },
     });
 
     this.#forceFieldBaseMaterial_.uniforms.map.value.wrapS =
@@ -272,8 +272,8 @@ class Project extends App {
 
     // Custom params for tweakpane
     const forceFieldParams = {
-      color1: { r: 0.0, g: 0.0, b: 1.0 },
-      color2: { r: 1.0, g: 0.5, b: 0.0 },
+      color1: { r: 0.02, g: 0.11, b: 0.2 },
+      color2: { r: 0.03, g: 0.21, b: 0.44 },
     };
 
     forceFieldFolder
@@ -439,6 +439,8 @@ class Project extends App {
     const giraffe = await this.LoadGLB_("./models/giraffe.glb");
     giraffe.traverse((c) => {
       if (c.isMesh) {
+        c.material.transparent = true;
+        c.material.opacity = 0.25;
         c.castShadow = true;
         c.receiveShadow = true;
         c.shadowSide = THREE.DoubleSide;
@@ -490,9 +492,9 @@ class Project extends App {
     // Create a character tweak pane folder
     this.#character_.customParams = {
       wireframe: false,
-      transparent: false,
-      opacity: 1,
-      color: { r: 1, g: 1, b: 1 },
+      transparent: true,
+      opacity: 0.25,
+      // color: { r: 1, g: 1, b: 1 },
       position: { x: 0, y: -1.5, z: 0 },
       rotFactor: 0.2,
     };
