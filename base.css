@@ -77,7 +77,6 @@ img {
 }
 
 .logo-container {
-  background-color: hsl(214deg 58% 90% / 91%);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -88,7 +87,31 @@ img {
 }
 
 .logo {
-  width: 100px;
+  width: 3rem;
+  filter: drop-shadow(-2px -4px 40px rgba(0, 0, 0, 0.85));
+  opacity: 0.6;
+}
+
+.logo--g svg path {
+  fill: currentColor;
+}
+
+.logo--infinity {
+  color: hsl(194 78% 4% / 1);
+  opacity: 0.77;
+}
+
+.logo--8 {
+  color: hsl(207.03deg 68.1% 31.96%);
+}
+.logo--hourglass {
+  color: hsl(197deg 33.59% 50.82%);
+  filter: drop-shadow(-2px -4px 60px rgba(0, 180, 245, 0.85));
+}
+
+.logo--infinity {
+  color: hsl(194.05deg 85.59% 59.82%);
+  filter: drop-shadow(-2px -4px 60px rgba(0, 250, 55, 0.85));
 }
 
 .logo--infinity svg {
@@ -109,7 +132,7 @@ section {
 }
 
 .outro {
-  background-color: #1e9e6b;
+  background-color: #bae2f0;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -320,11 +343,11 @@ section {
 }
 
 .noise {
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
+  width: 100vw;
+  height: 100svh;
 }
 
 .noise::before {
@@ -334,15 +357,34 @@ section {
 
 .noise::before {
   position: absolute;
-  left: -5rem;
-  top: -5rem;
-  width: calc(100% + 20rem);
-  height: calc(100% + 20rem);
-  background-image: url("public/imgs/noise.png");
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url("public/imgs/noise-2-lg-o.jpg");
   background-position: 50%;
   background-size: cover;
   background-repeat: no-repeat;
-  animation: noise 0.4s steps(2) infinite;
+}
+
+.noise::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  mix-blend-mode: color;
+  background-color: #9bc9fe;
+}
+
+.noise__gradient {
+  background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.8));
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  left: 0;
+  top: 0;
 }
 
 @keyframes noise {
@@ -501,23 +543,12 @@ section {
 .tp-dfwv {
   position: fixed !important;
   z-index: 11;
+  display: none;
 }
 
 /* masked sections */
 .masked-section {
   position: relative;
-}
-
-.masked-section--hourglass {
-  /* background-color: #9bc9fe; */
-}
-
-.masked-section--eight {
-  /* background-color: #3077ae; */
-}
-
-.masked-section--infinity {
-  /* background-color: #0f7794; */
 }
 
 .mask-container {
@@ -578,4 +609,16 @@ section {
   bottom: 40px;
   left: 50%;
   transform: translate(-50%, 0);
+}
+
+@media screen and (min-width: 768px) {
+  .logo {
+    width: 5.5rem;
+  }
+}
+
+@media screen and (min-width: 1024px) {
+  .logo {
+    width: 7rem;
+  }
 }
