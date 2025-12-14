@@ -526,10 +526,15 @@ document.addEventListener("DOMContentLoaded", () => {
   const imagePromises = nalaImagePaths.map((path) => loadImage(path));
 
   Promise.all(imagePromises).then(() => {
-    // alert("Finished");
-    // document.body.classList.remove("loading");
-
     // Allow scrolling now that all images are loaded
     document.body.removeAttribute("data-lenis-prevent");
+
+    // Check if audio is also loaded, then notify audio manager
+    const checkAudioReady = setInterval(() => {
+      if (window.audioManager && window.audioManager.isAudioLoaded()) {
+        clearInterval(checkAudioReady);
+        window.audioManager.setReady(true);
+      }
+    }, 100);
   });
 });

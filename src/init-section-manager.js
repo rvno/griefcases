@@ -1,12 +1,29 @@
 import { SectionManager } from "./section-manager.js";
+import { AudioManager } from "./audio-manager.js";
 
 document.addEventListener("DOMContentLoaded", () => {
   // Get all masked sections
-  const sections = document.querySelectorAll(".masked-section[data-masked-section]");
+  const sections = document.querySelectorAll(
+    ".masked-section[data-masked-section]"
+  );
 
   if (sections.length > 0) {
     // Initialize the SectionManager
     const sectionManager = new SectionManager(sections);
+
+    // Initialize the AudioManager
+    const audioManager = new AudioManager();
+
+    // Pass section manager reference to audio manager
+    audioManager.setSectionManager(sectionManager);
+
+    // Connect audio manager to section changes
+    sectionManager.onSectionChange((section) => {
+      audioManager.onSectionChange(section);
+    });
+
+    // Make audioManager globally accessible for loader
+    window.audioManager = audioManager;
 
     console.log(`SectionManager initialized with ${sections.length} sections`);
 

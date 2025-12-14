@@ -9,6 +9,8 @@ export class SectionManager {
   #sections = [];
   #triggers = [];
   #noiseFilterTrigger = null;
+  #activeSection = null;
+  #onSectionChangeCallback = null;
 
   /**
    * @param {Array<HTMLElement>} sections - Array of section elements to manage
@@ -87,6 +89,30 @@ export class SectionManager {
 
       console.log(`Theme changed to: ${theme}`);
     }
+
+    // Update active section and notify callback
+    if (this.#activeSection !== theme) {
+      this.#activeSection = theme;
+      if (this.#onSectionChangeCallback) {
+        this.#onSectionChangeCallback(theme);
+      }
+    }
+  }
+
+  /**
+   * Get the currently active section theme
+   * @returns {string|null} - Active theme name (e.g., "eight", "g", "hourglass", "infinity")
+   */
+  getActiveSection() {
+    return this.#activeSection;
+  }
+
+  /**
+   * Register a callback to be notified when the active section changes
+   * @param {Function} callback - Function to call with the new theme name
+   */
+  onSectionChange(callback) {
+    this.#onSectionChangeCallback = callback;
   }
 
   /**

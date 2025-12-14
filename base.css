@@ -564,7 +564,7 @@ section {
 .tp-dfwv {
   position: fixed !important;
   z-index: 11;
-  display: none;
+  /* display: none; */
 }
 
 /* masked sections */
@@ -645,6 +645,28 @@ section {
   left: 50%;
   transform: translate(-50%, 0);
   pointer-events: all;
+}
+
+.audio-toggle {
+  position: absolute;
+  bottom: 40px;
+  right: 40px;
+  padding: 12px 24px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+  color: #fff;
+  font-family: "Gilroy", sans-serif;
+  font-size: 14px;
+  cursor: pointer;
+  pointer-events: all;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.audio-toggle:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
 }
 
 @media screen and (min-width: 768px) {
