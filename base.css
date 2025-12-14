@@ -7,9 +7,9 @@
 :root {
   --theme: hsl(212, 98%, 80%);
   --theme-g: hsl(223, 87%, 24%);
+  --theme-eight: hsl(207.03deg 68.1% 31.96%);
   --theme-hourglass: hsl(212, 98%, 80%);
-  --theme-eight: hsl(206, 57%, 44%);
-  --theme-infinity: hsl(193, 82%, 32%);
+  --theme-infinity: hsl(194.05deg 99.84% 79.43%);
   --noise-invert: 0;
   --noise-brightness: 1;
 }
@@ -627,6 +627,18 @@ section {
   background-color: var(--theme-hourglass);
   z-index: 5;
   opacity: 0.48;
+}
+
+.masked-section--infinity::after {
+  position: absolute;
+  content: "";
+  display: block;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  background: linear-gradient(180deg, transparent 0%, rgb(253 255 255 / 80%));
+  z-index: 5;
 }
 
 .main-overlay {
