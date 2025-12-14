@@ -564,7 +564,7 @@ section {
 .tp-dfwv {
   position: fixed !important;
   z-index: 11;
-  /* display: none; */
+  display: none;
 }
 
 /* masked sections */
