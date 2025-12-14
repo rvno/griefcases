@@ -58,3 +58,9 @@
   - **Bounding Box-Based Positioning**: Fixed positioning issue for scaled models by using bounding box center instead of model pivot point. Critical for models with non-centered pivots (e.g., turtle model at scale 0.37) - ensures forcefield encapsulates visible geometry regardless of local transforms or pivot placement. Fade calculations also use bounding box center for accurate vertical alignment.
 
   - **Shared Texture References**: After cloning ShaderMaterial, depth texture and pattern texture are explicitly re-assigned since `clone()`creates new uniform objects rather than preserving texture references.
+
+## 12-13-24
+
+- noise and background adjustments
+- set scrolltrigger to handle updating background-color blend based on active section
+- tie scroll progress to invert and brightness filters
