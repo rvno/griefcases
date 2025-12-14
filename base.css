@@ -76,6 +76,12 @@ img {
   justify-content: center;
   position: relative;
   overflow: hidden;
+  color: #fff;
+}
+
+.loader__progress {
+  width: 100%;
+  text-align: center;
 }
 
 .logo-container {
@@ -86,6 +92,7 @@ img {
   width: 100%;
   padding: 10vw;
   position: relative;
+  flex-wrap: wrap;
 }
 
 .logo {
