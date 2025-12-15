@@ -98,17 +98,26 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (hasNotebook) {
       // NOTEBOOK CONFIGURATION
-      // The notebook has a horizontal scroll that needs 10vh of pin duration (from notebook.js)
-      // We need to coordinate this with the mask reveal effect
-      const notebookPinDuration = window.innerHeight * 10; // Match notebook.js sticky height
+      // Calculate pin duration based on the actual width of the slides
+      const slidesContainer = hasNotebook.querySelector(".slides");
+      const slider = hasNotebook.querySelector(".slider");
 
-      initMask(element, {
-        pinDuration: notebookPinDuration, // Total pin time matches notebook horizontal scroll
-        maskStartProgress: 0.0, // Start mask reveal immediately (0% of total duration)
-        maskEndProgress: 0.2, // Finish mask reveal at 20% (2vh out of 10vh)
-        // This leaves 80% of the duration (8vh) for the horizontal scroll to complete
-        maxMaskSize: 900,
-      });
+      if (slidesContainer && slider) {
+        const totalMove = slidesContainer.offsetWidth - slider.offsetWidth;
+        const maskRevealFactor = 1.25; // 25% extra for mask reveal (matches notebook.js)
+        const notebookPinDuration = totalMove * maskRevealFactor;
+
+        initMask(element, {
+          pinDuration: notebookPinDuration, // Total pin time matches notebook horizontal scroll
+          maskStartProgress: 0.0, // Start mask reveal immediately (0% of total duration)
+          maskEndProgress: 0.2, // Finish mask reveal at 20% (2vh out of 10vh)
+          // This leaves 80% of the duration for the horizontal scroll to complete
+          maxMaskSize: 900,
+        });
+      } else {
+        // Fallback if slides not found
+        initMask(element);
+      }
     } else {
       // DEFAULT CONFIGURATION for other masked sections
       initMask(element);

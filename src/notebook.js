@@ -15,9 +15,15 @@ document.addEventListener("DOMContentLoaded", () => {
   const slides = document.querySelectorAll(".slide");
   const revealImages = document.querySelectorAll(".masked-image");
 
-  const stickyHeight = window.innerHeight * 10;
+  // Calculate how far we need to scroll horizontally
   const totalMove = slidesContainer.offsetWidth - slider.offsetWidth;
   const slideWidth = slider.offsetWidth;
+
+  // Calculate sticky height based on total horizontal distance to scroll
+  // Add extra height for mask reveal (20% of total) if in coordinated mode
+  const parentMaskedSection = stickySection.closest(".masked-section");
+  const maskRevealFactor = parentMaskedSection ? 1.25 : 1; // 25% extra for mask reveal
+  const stickyHeight = totalMove * maskRevealFactor;
 
   // Animate SVG drawing (initial state set in CSS to prevent flicker)
   // gsap.to(".handwritten path", {
@@ -81,9 +87,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   slides.forEach((slide) => observer.observe(slide));
 
-  // Check if notebook is wrapped in a masked-section
-  const parentMaskedSection = stickySection.closest(".masked-section");
-
+  // Use parentMaskedSection already declared above for coordinated vs standalone mode
   if (parentMaskedSection) {
     // COORDINATED MODE: Mask reveal happens first, then horizontal scroll
     // The parent masked-section handles pinning (total duration: 10vh)

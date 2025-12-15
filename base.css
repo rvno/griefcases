@@ -53,11 +53,11 @@ section::before {
   bottom: 0;
   /* Default to transparent, the animation will change opacity */
   background-color: attr(data-bg);
-  animation: reveal-bg linear forwards;
+  /* animation: reveal-bg linear forwards; */
   /* This is the core of scroll-driven animation */
-  animation-timeline: view();
+  /* animation-timeline: view(); */
   /* Animation range ensures it happens as the section enters the view */
-  animation-range: entry 0% cover 50%;
+  /* animation-range: entry 0% cover 50%; */
 }
 
 img {
@@ -136,9 +136,13 @@ img {
 section {
   position: relative;
   width: 100vw;
-  height: 100svh;
+  min-height: 100svh;
   /* background-color: #000; */
   overflow: hidden;
+}
+
+.test {
+  background: transparent;
 }
 
 .outro {
@@ -679,6 +683,35 @@ section {
 .audio-toggle:hover {
   background: rgba(255, 255, 255, 0.2);
   border-color: rgba(255, 255, 255, 0.5);
+}
+
+/* .mask-container--g {
+  overflow-y: auto;
+  overflow-x: hidden;
+  height: auto;
+  min-height: 100svh;
+} */
+
+.g-slides {
+  min-height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.g-slide {
+  background: transparent;
+  width: 100vw;
+  min-height: 100svh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.g-slide h1 {
+  color: white;
+  font-size: 72px;
 }
 
 @media screen and (min-width: 768px) {

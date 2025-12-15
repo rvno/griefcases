@@ -2,6 +2,12 @@ import { SectionManager } from "./section-manager.js";
 import { AudioManager } from "./audio-manager.js";
 
 document.addEventListener("DOMContentLoaded", () => {
+  // Clear URL hash and scroll to top on page load
+  if (window.location.hash) {
+    history.replaceState(null, null, window.location.pathname + window.location.search);
+  }
+  window.scrollTo(0, 0);
+
   // Get all masked sections
   const sections = document.querySelectorAll(
     ".masked-section[data-masked-section]"
