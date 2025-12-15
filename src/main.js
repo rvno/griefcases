@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { getAssetPath } from "./utils/asset-path.js";
 
 import { App } from "./app.js";
 import { InputManager } from "./input-manager.js";
@@ -249,7 +250,7 @@ class Project extends App {
       },
       map: {
         value: await this.loadTexture(
-          "public/textures/placeholder-paw.ktx2",
+          getAssetPath("textures/placeholder-paw.ktx2"),
           true
         ),
       },
