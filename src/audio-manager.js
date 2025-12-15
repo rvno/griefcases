@@ -2,8 +2,8 @@ import gsap from "gsap";
 
 // Audio track paths
 const TRACKS = {
-  memories: "public/sounds/Memories-FirahFabe.mp3",
-  trustTheProcess: "public/sounds/Trust_the_process_wip1.mp3",
+  memories: "src/sounds/Memories-FirahFabe.mp3",
+  trustTheProcess: "src/sounds/Trust_the_process_wip1.mp3",
 };
 
 /**

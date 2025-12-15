@@ -248,7 +248,7 @@ class Project extends App {
         value: new THREE.Vector2(window.innerWidth, window.innerHeight),
       },
       map: {
-        value: await this.loadTexture("./textures/placeholder-paw.ktx2", true),
+        value: await this.loadTexture("/src/textures/placeholder-paw.ktx2", true),
       },
       time: { value: 0 },
       fadeTop: { value: 0.0 },

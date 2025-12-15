@@ -102,7 +102,7 @@ class App {
 
   async #setupLoaders_() {
     this.#ktx2Loader_ = new KTX2Loader();
-    this.#ktx2Loader_.setTranscoderPath("./libs/basis/");
+    this.#ktx2Loader_.setTranscoderPath("/libs/basis/");
     this.#ktx2Loader_.detectSupport(this.#three_);
   }
 

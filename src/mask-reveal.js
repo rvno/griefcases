@@ -9,12 +9,21 @@ document.addEventListener("DOMContentLoaded", () => {
   // Lenis setup (global, only once)
   const lenis = new Lenis({
     smooth: true,
+    // Mobile touch settings
+    touchMultiplier: 2,
+    // Allow smooth scrolling on mobile
+    smoothTouch: true,
+    // Normalize wheel speed across browsers
+    normalizeWheel: true,
   });
   lenis.on("scroll", ScrollTrigger.update);
   gsap.ticker.add((time) => {
     lenis.raf(time * 1000);
   });
   gsap.ticker.lagSmoothing(0);
+
+  // Make lenis globally accessible for debugging
+  window.lenis = lenis;
 
   // Function to initialize a single masked section instance
   function initMask(maskedElement, options = {}) {

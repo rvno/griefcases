@@ -20,6 +20,9 @@ body {
   height: 700vh;
   font-family: "Gilroy";
   overflow: hidden;
+  /* Enable touch scrolling on mobile */
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
 }
 
 body {
@@ -139,6 +142,8 @@ section {
   min-height: 100svh;
   /* background-color: #000; */
   overflow: hidden;
+  /* Enable touch events on mobile */
+  touch-action: pan-y;
 }
 
 .test {
@@ -167,7 +172,7 @@ section {
 
 .notebook {
   /* paper bg */
-  background-image: url("public/imgs/paper-texture.webp");
+  background-image: url("src/imgs/paper-texture.webp");
   background-size: cover;
   height: 100%;
 }
@@ -283,7 +288,7 @@ section {
 
 .masked-image {
   aspect-ratio: 16 / 9;
-  mask-image: url("public/imgs/paper-crumple.png");
+  mask-image: url("src/imgs/paper-crumple.png");
   mask-mode: alpha;
   mask-position: 0px 0px;
   mask-size: 100% 700%;
@@ -306,7 +311,7 @@ section {
 }
 
 .masked-image__surface {
-  background-image: url("public/imgs/paper-mask.avif");
+  background-image: url("src/imgs/paper-mask.avif");
   background-position: 0% 0%;
   background-size: 100%;
   width: 100%;
@@ -383,7 +388,7 @@ section {
   top: 0;
   width: 100%;
   height: 100%;
-  background-image: url("public/imgs/noise-2-lg-o.jpg");
+  background-image: url("src/imgs/noise-2-lg-o.jpg");
   background-position: 50%;
   background-size: cover;
   background-repeat: no-repeat;
@@ -530,11 +535,11 @@ section {
   left: 0;
   width: 100%;
   height: 100%;
-  /* background-image: url("public/imgs/placeholder-1.jpeg");
+  /* background-image: url("src/imgs/placeholder-1.jpeg");
   background-size: cover;
   background-position: center; */
-  -webkit-mask-image: url("public/imgs/Nala-test.png");
-  mask-image: url("public/imgs/Nala-test.png");
+  -webkit-mask-image: url("src/imgs/Nala-test.png");
+  mask-image: url("src/imgs/Nala-test.png");
   -webkit-mask-size: contain;
   mask-size: contain;
   -webkit-mask-repeat: no-repeat;
@@ -600,24 +605,23 @@ section {
 }
 
 .mask-container--eight {
-  -webkit-mask: url("public/masks/black-8.svg") center no-repeat;
-  mask: url("public/masks/black-8.svg") center no-repeat;
+  -webkit-mask: url("src/masks/black-8.svg") center no-repeat;
+  mask: url("src/masks/black-8.svg") center no-repeat;
 }
 
 .mask-container--g {
-  -webkit-mask: url("public/masks/black-g.svg") center no-repeat;
-  mask: url("public/masks/black-g.svg") center no-repeat;
+  -webkit-mask: url("src/masks/black-g.svg") center no-repeat;
+  mask: url("src/masks/black-g.svg") center no-repeat;
 }
 
 .mask-container--hourglass {
-  -webkit-mask: url("public/masks/black-hourglass.svg") center no-repeat;
-  mask: url("public/masks/black-hourglass.svg") center no-repeat;
+  -webkit-mask: url("src/masks/black-hourglass.svg") center no-repeat;
+  mask: url("src/masks/black-hourglass.svg") center no-repeat;
 }
 
 .mask-container--infinity {
-  -webkit-mask: url("public/masks/black-infinity-leash-solid.svg") center
-    no-repeat;
-  mask: url("public/masks/black-infinity-leash-solid.svg") center no-repeat;
+  -webkit-mask: url("src/masks/black-infinity-leash-solid.svg") center no-repeat;
+  mask: url("src/masks/black-infinity-leash-solid.svg") center no-repeat;
 }
 
 .masked-section--hourglass::after {
