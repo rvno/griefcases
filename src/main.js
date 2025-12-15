@@ -249,7 +249,7 @@ class Project extends App {
       },
       map: {
         value: await this.loadTexture(
-          "/public/textures/placeholder-paw.ktx2",
+          "public/textures/placeholder-paw.ktx2",
           true
         ),
       },
