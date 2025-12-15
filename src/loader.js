@@ -747,7 +747,7 @@ document.addEventListener("DOMContentLoaded", () => {
         duration: 1.0,
         ease: "power2.out",
         onStart: () => {
-          mainOverlay.style.pointerEvents = "auto";
+          // mainOverlay.style.pointerEvents = "auto";
         },
       },
       2.8 // slightly after instruction text starts
