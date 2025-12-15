@@ -127,8 +127,8 @@ export class AudioManager {
     // First, check URL hash
     const hash = window.location.hash;
     if (hash) {
-      // Extract section ID from hash (e.g., "#section-eight" -> "eight")
-      const hashSection = hash.replace("#", "").replace("section-", "");
+      // Extract section ID from hash (e.g., "#eight" -> "eight")
+      const hashSection = hash.replace("#", "");
 
       // Validate it's a known section
       if (["g", "eight", "hourglass", "infinity"].includes(hashSection)) {
