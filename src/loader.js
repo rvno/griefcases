@@ -603,123 +603,120 @@ document.addEventListener("DOMContentLoaded", () => {
   Promise.all(imagePromises).then(() => {
     isLoadingComplete = true;
 
-    // Wait 1 second at 100% before starting exit animation
-    setTimeout(() => {
-      // Create timeline for exit animation
-      const exitTimeline = gsap.timeline({
-        onComplete: () => {
-          // Allow scrolling now that all images are loaded
-          document.body.removeAttribute("data-lenis-prevent");
+    // Create timeline for exit animation - starts immediately
+    const exitTimeline = gsap.timeline({
+      onComplete: () => {
+        // Allow scrolling now that all images are loaded
+        document.body.removeAttribute("data-lenis-prevent");
 
-          // Enable touch scrolling on mobile
-          if (window.lenis) {
-            window.lenis.start();
-          }
-
-          // Check if audio is also loaded, then notify audio manager
-          const checkAudioReady = setInterval(() => {
-            if (window.audioManager && window.audioManager.isAudioLoaded()) {
-              clearInterval(checkAudioReady);
-              window.audioManager.setReady(true);
-            }
-          }, 100);
-        },
-      });
-
-      // First, fade out all logos from center with dampened easing
-      exitTimeline.to(logos, {
-        opacity: 0,
-        duration: 0.7,
-        ease: "sine.in",
-      });
-
-      // Add a longer pause between exit and re-entrance
-      exitTimeline.to({}, { duration: 0.4 });
-
-      // Then fade them back in one by one to their original positions
-      // Each shape moves diagonally from center with depth (z-perspective via scale)
-      logos.forEach((logo, index) => {
-        // Offset amounts based on position from center
-        // index 0 (leftmost): 20px right offset (moves from SW to NW)
-        // index 1: smaller offset
-        // index 2: smaller offset
-        // index 3 (rightmost): 20px left offset (moves from SE to NE) - mirrored
-
-        let offsetX, offsetY;
-
-        if (index === 0) {
-          // Leftmost: origin from SW (right and down from final position)
-          offsetX = 20;
-          offsetY = 15;
-        } else if (index === 1) {
-          // Second: smaller offset from S
-          offsetX = 8;
-          offsetY = 10;
-        } else if (index === 2) {
-          // Third: smaller offset from S (mirroring second)
-          offsetX = -8;
-          offsetY = 10;
-        } else {
-          // Rightmost: origin from SE (left and down from final position) - mirrored
-          offsetX = -20;
-          offsetY = 15;
+        // Enable touch scrolling on mobile
+        if (window.lenis) {
+          window.lenis.start();
         }
 
-        exitTimeline.fromTo(
-          logo,
-          {
-            x: offsetX,
-            y: offsetY,
-            opacity: 0,
-            scale: 0.85, // starts slightly smaller to add depth
-          },
-          {
-            x: 0,
-            y: 0,
-            opacity: 1,
-            scale: 1,
-            duration: 1.2, // slower entrance
-            ease: "expo.out",
-          },
-          index * 0.35 + 1.1 // larger stagger with more delay to let each shape settle
-        );
-      });
+        // Check if audio is also loaded, then notify audio manager
+        const checkAudioReady = setInterval(() => {
+          if (window.audioManager && window.audioManager.isAudioLoaded()) {
+            clearInterval(checkAudioReady);
+            window.audioManager.setReady(true);
+          }
+        }, 100);
+      },
+    });
 
-      // Fade out loading text (bg and fg)
-      exitTimeline.to(
-        [loaderTextBg, loaderTextFg],
+    // First, fade out all logos from center with dampened easing
+    exitTimeline.to(logos, {
+      opacity: 0,
+      duration: 0.7,
+      ease: "sine.in",
+    });
+
+    // Add ~1 second pause between exit and re-entrance
+    exitTimeline.to({}, { duration: 1.0 });
+
+    // Then fade them back in one by one to their original positions
+    // Each shape moves diagonally from center with depth (z-perspective via scale)
+    logos.forEach((logo, index) => {
+      // Offset amounts based on position from center
+      // index 0 (leftmost): 20px right offset (moves from SW to NW)
+      // index 1: smaller offset
+      // index 2: smaller offset
+      // index 3 (rightmost): 20px left offset (moves from SE to NE) - mirrored
+
+      let offsetX, offsetY;
+
+      if (index === 0) {
+        // Leftmost: origin from SW (right and down from final position)
+        offsetX = 20;
+        offsetY = 15;
+      } else if (index === 1) {
+        // Second: smaller offset from S
+        offsetX = 8;
+        offsetY = 10;
+      } else if (index === 2) {
+        // Third: smaller offset from S (mirroring second)
+        offsetX = -8;
+        offsetY = 10;
+      } else {
+        // Rightmost: origin from SE (left and down from final position) - mirrored
+        offsetX = -20;
+        offsetY = 15;
+      }
+
+      exitTimeline.fromTo(
+        logo,
         {
+          x: offsetX,
+          y: offsetY,
           opacity: 0,
-          duration: 0.6,
-          ease: "power2.inOut",
+          scale: 0.85, // starts slightly smaller to add depth
         },
-        0.8 // start after shapes begin appearing
-      );
-
-      // Fade in instruction text
-      exitTimeline.to(
-        loaderInstruction,
         {
+          x: 0,
+          y: 0,
           opacity: 1,
-          duration: 0.8,
-          ease: "power2.out",
+          scale: 1,
+          duration: 1.2, // slower entrance
+          ease: "expo.out",
         },
-        2.0 // after all shapes have appeared
+        index * 0.35 + 1.7 // adjusted timing for 1s pause
       );
+    });
 
-      // Fade in navbar
-      exitTimeline.to(
-        mainOverlay,
-        {
-          opacity: 1,
-          duration: 1.0,
-          ease: "power2.out",
-          onStart: () => {
-            mainOverlay.style.pointerEvents = "auto";
-          },
+    // Fade out loading text (bg and fg)
+    exitTimeline.to(
+      [loaderTextBg, loaderTextFg],
+      {
+        opacity: 0,
+        duration: 0.6,
+        ease: "power2.inOut",
+      },
+      1.4 // start after shapes begin appearing
+    );
+
+    // Fade in instruction text
+    exitTimeline.to(
+      loaderInstruction,
+      {
+        opacity: 1,
+        duration: 0.8,
+        ease: "power2.out",
+      },
+      2.6 // after all shapes have appeared
+    );
+
+    // Fade in navbar
+    exitTimeline.to(
+      mainOverlay,
+      {
+        opacity: 1,
+        duration: 1.0,
+        ease: "power2.out",
+        onStart: () => {
+          mainOverlay.style.pointerEvents = "auto";
         },
-        2.2 // slightly after instruction text starts
-      );
-    }, 1000); // 1 second delay at 100%
+      },
+      2.8 // slightly after instruction text starts
+    );
   });
 });
