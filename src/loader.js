@@ -1,4 +1,5 @@
 import { getAssetPath } from "./utils/asset-path.js";
+import gsap from "gsap";
 
 // Get all image paths from the nala folder
 const nalaImagePaths = [
@@ -490,8 +491,78 @@ document.addEventListener("DOMContentLoaded", () => {
   loaderProgress.classList.add("loader__progress");
   logoContainer.appendChild(loaderProgress);
 
+  // Get all logo elements
+  const logos = [
+    document.querySelector(".logo--g"),
+    document.querySelector(".logo--8"),
+    document.querySelector(".logo--hourglass"),
+    document.querySelector(".logo--infinity"),
+  ];
+
   let loadedCount = 0;
   const totalImages = nalaImagePaths.length;
+  let isLoadingComplete = false;
+
+  // Store original positions for final animation
+  const originalPositions = logos.map((logo) => {
+    const rect = logo.getBoundingClientRect();
+    return {
+      x: rect.left + rect.width / 2,
+      y: rect.top + rect.height / 2,
+    };
+  });
+
+  // Center of screen
+  const centerX = window.innerWidth / 2;
+  const centerY = window.innerHeight / 2;
+
+  // Initialize: hide all logos and position them at center
+  logos.forEach((logo, index) => {
+    gsap.set(logo, {
+      opacity: 0,
+      x: centerX - originalPositions[index].x,
+      y: centerY - originalPositions[index].y,
+    });
+  });
+
+  // Create cycling animation through logos
+  let currentLogoIndex = 0;
+  const cycleDuration = 1.05; // ~50% longer (was 0.7s, now 1.05s)
+
+  function cycleLogos() {
+    if (isLoadingComplete) return;
+
+    const currentLogo = logos[currentLogoIndex];
+    const nextIndex = (currentLogoIndex + 1) % logos.length;
+
+    // Fade out current, fade in next with slower, softer easing
+    gsap.to(currentLogo, {
+      opacity: 0,
+      duration: 0.75,
+      ease: "sine.inOut",
+    });
+
+    gsap.to(logos[nextIndex], {
+      opacity: 1,
+      duration: 0.75,
+      ease: "sine.inOut",
+      delay: 0.3,
+      onComplete: () => {
+        currentLogoIndex = nextIndex;
+        cycleLogos();
+      },
+    });
+  }
+
+  // Start the cycling animation
+  gsap.to(logos[0], {
+    opacity: 1,
+    duration: 0.75,
+    ease: "sine.out",
+    onComplete: () => {
+      setTimeout(cycleLogos, cycleDuration);
+    },
+  });
 
   // Update loader percentage
   function updateLoader() {
@@ -528,20 +599,100 @@ document.addEventListener("DOMContentLoaded", () => {
   const imagePromises = nalaImagePaths.map((path) => loadImage(path));
 
   Promise.all(imagePromises).then(() => {
-    // Allow scrolling now that all images are loaded
-    document.body.removeAttribute("data-lenis-prevent");
+    isLoadingComplete = true;
 
-    // Enable touch scrolling on mobile
-    if (window.lenis) {
-      window.lenis.start();
-    }
+    // Wait 1 second at 100% before starting exit animation
+    setTimeout(() => {
+      // Create timeline for exit animation
+      const exitTimeline = gsap.timeline({
+        onComplete: () => {
+          // Allow scrolling now that all images are loaded
+          document.body.removeAttribute("data-lenis-prevent");
 
-    // Check if audio is also loaded, then notify audio manager
-    const checkAudioReady = setInterval(() => {
-      if (window.audioManager && window.audioManager.isAudioLoaded()) {
-        clearInterval(checkAudioReady);
-        window.audioManager.setReady(true);
-      }
-    }, 100);
+          // Enable touch scrolling on mobile
+          if (window.lenis) {
+            window.lenis.start();
+          }
+
+          // Check if audio is also loaded, then notify audio manager
+          const checkAudioReady = setInterval(() => {
+            if (window.audioManager && window.audioManager.isAudioLoaded()) {
+              clearInterval(checkAudioReady);
+              window.audioManager.setReady(true);
+            }
+          }, 100);
+        },
+      });
+
+      // First, fade out all logos from center with dampened easing
+      exitTimeline.to(logos, {
+        opacity: 0,
+        duration: 0.7,
+        ease: "sine.in",
+      });
+
+      // Add a longer pause between exit and re-entrance
+      exitTimeline.to({}, { duration: 0.4 });
+
+      // Then fade them back in one by one to their original positions
+      // Each shape moves diagonally from center with depth (z-perspective via scale)
+      logos.forEach((logo, index) => {
+        // Offset amounts based on position from center
+        // index 0 (leftmost): 20px right offset (moves from SW to NW)
+        // index 1: smaller offset
+        // index 2: smaller offset
+        // index 3 (rightmost): 20px left offset (moves from SE to NE) - mirrored
+
+        let offsetX, offsetY;
+
+        if (index === 0) {
+          // Leftmost: origin from SW (right and down from final position)
+          offsetX = 20;
+          offsetY = 15;
+        } else if (index === 1) {
+          // Second: smaller offset from S
+          offsetX = 8;
+          offsetY = 10;
+        } else if (index === 2) {
+          // Third: smaller offset from S (mirroring second)
+          offsetX = -8;
+          offsetY = 10;
+        } else {
+          // Rightmost: origin from SE (left and down from final position) - mirrored
+          offsetX = -20;
+          offsetY = 15;
+        }
+
+        exitTimeline.fromTo(
+          logo,
+          {
+            x: offsetX,
+            y: offsetY,
+            opacity: 0,
+            scale: 0.85, // starts slightly smaller to add depth
+          },
+          {
+            x: 0,
+            y: 0,
+            opacity: 1,
+            scale: 1,
+            duration: 1.2, // slower entrance
+            ease: "expo.out",
+          },
+          index * 0.35 + 1.1 // larger stagger with more delay to let each shape settle
+        );
+      });
+
+      // Fade out progress text
+      exitTimeline.to(
+        loaderProgress,
+        {
+          opacity: 0,
+          duration: 0.4,
+          ease: "power2.inOut",
+        },
+        0.2 // start slightly before logo animations
+      );
+    }, 1000); // 1 second delay at 100%
   });
 });
