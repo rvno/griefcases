@@ -34,7 +34,7 @@ document.addEventListener("DOMContentLoaded", () => {
       textStartProgress: 0.75,
       textEndProgress: 0.95,
       startY: 5,
-      maxMaskSize: 900,
+      maxMaskSize: 1000,
       startScale: 1.5,
       endScale: 1,
       ...options,
@@ -121,7 +121,7 @@ document.addEventListener("DOMContentLoaded", () => {
           maskStartProgress: 0.0, // Start mask reveal immediately (0% of total duration)
           maskEndProgress: 0.2, // Finish mask reveal at 20% (2vh out of 10vh)
           // This leaves 80% of the duration for the horizontal scroll to complete
-          maxMaskSize: 900,
+          maxMaskSize: 1000,
         });
       } else {
         // Fallback if slides not found
