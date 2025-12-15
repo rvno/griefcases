@@ -188,13 +188,14 @@ section {
 }
 
 .outro {
-  background-color: #bae2f0;
+  /* background-color: #bae2f0; */
   display: flex;
   justify-content: center;
   align-items: center;
   text-align: center;
   width: 100vw;
   height: 100svh;
+  position: relative;
 }
 
 .outro h1 {
@@ -205,6 +206,7 @@ section {
   font-weight: 900;
   letter-spacing: 2px;
   line-height: 0.9;
+  position: relative;
 }
 
 .notebook {
@@ -810,6 +812,14 @@ section {
 .g-slide h1 {
   /* color: white; */
   font-size: 72px;
+}
+
+#sky {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
 }
 
 @media screen and (min-width: 768px) {
