@@ -803,10 +803,12 @@ section {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  flex-direction: column;
+  color: rgb(249, 241, 233);
 }
 
 .g-slide h1 {
-  color: white;
+  /* color: white; */
   font-size: 72px;
 }
 
