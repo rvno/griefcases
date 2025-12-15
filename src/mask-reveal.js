@@ -27,6 +27,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Function to initialize a single masked section instance
   function initMask(maskedElement, options = {}) {
+    // Calculate responsive maxMaskSize
+    // At narrow viewports (< 876px), we need a larger percentage to prevent mask shape visibility
+    const viewportWidth = window.innerWidth;
+    let maxMaskSize = 1000;
+
+    if (viewportWidth < 876) {
+      // Scale up proportionally for narrow viewports
+      // At 876px: 1000%, at 320px (mobile): ~2700%
+      maxMaskSize = Math.max(1000, (876 / viewportWidth) * 1000);
+    }
+
     const config = {
       pinDuration: window.innerHeight * 2,
       maskStartProgress: 0.25,
@@ -34,7 +45,7 @@ document.addEventListener("DOMContentLoaded", () => {
       textStartProgress: 0.75,
       textEndProgress: 0.95,
       startY: 5,
-      maxMaskSize: 1000,
+      maxMaskSize: maxMaskSize,
       startScale: 1.5,
       endScale: 1,
       ...options,
@@ -121,7 +132,6 @@ document.addEventListener("DOMContentLoaded", () => {
           maskStartProgress: 0.0, // Start mask reveal immediately (0% of total duration)
           maskEndProgress: 0.2, // Finish mask reveal at 20% (2vh out of 10vh)
           // This leaves 80% of the duration for the horizontal scroll to complete
-          maxMaskSize: 1000,
         });
       } else {
         // Fallback if slides not found
@@ -131,5 +141,15 @@ document.addEventListener("DOMContentLoaded", () => {
       // DEFAULT CONFIGURATION for other masked sections
       initMask(element);
     }
+  });
+
+  // Handle window resize to refresh ScrollTrigger
+  let resizeTimeout;
+  window.addEventListener("resize", () => {
+    // Debounce resize events to avoid performance issues
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(() => {
+      ScrollTrigger.refresh();
+    }, 250);
   });
 });
