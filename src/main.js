@@ -15,6 +15,8 @@ class Project extends App {
   #characterGroup_ = null;
   #characterItems_ = []; // Orbiting items around character
   #objects_ = [];
+  #floor_ = null; // Floor mesh reference
+  #boundaryThreshold_ = 1.5; // Distance from floor edge where character is blocked
 
   // Environment
   #environment_ = {};
@@ -115,6 +117,9 @@ class Project extends App {
     groundMesh.rotation.x = -Math.PI / 2;
     groundMesh.receiveShadow = true;
     this.Scene.add(groundMesh);
+
+    // Store floor reference for boundary detection
+    this.#floor_ = groundMesh;
 
     // Depth Portion
     // create a cube in the middle
@@ -585,6 +590,7 @@ class Project extends App {
       // color: { r: 1, g: 1, b: 1 },
       position: { x: 0, y: -1.5, z: 0 },
       rotFactor: 0.2,
+      boundaryThreshold: this.#boundaryThreshold_,
     };
     let previousValues = {
       position: { x: 0, y: -1.5, z: 0 },
@@ -670,6 +676,18 @@ class Project extends App {
         max: 3,
         step: 0.01,
       });
+
+      // Boundary threshold control
+      charFolder
+        .addBinding(this.#character_.customParams, "boundaryThreshold", {
+          label: "Boundary Threshold",
+          min: 0,
+          max: 10,
+          step: 0.1,
+        })
+        .on("change", (evt) => {
+          this.#boundaryThreshold_ = evt.value;
+        });
 
       // Character Items visibility controls
       const itemsFolder = this.Pane.addFolder({
@@ -816,9 +834,36 @@ class Project extends App {
     // quaternion deals with the character's rotation
     velocity.applyQuaternion(this.#characterGroup_.quaternion);
 
+    // Calculate new position
+    const newPosition = this.#characterGroup_.position.clone().add(velocity);
+
+    // Check boundary constraints based on floor dimensions
+    if (this.#floor_) {
+      // Get floor dimensions from geometry (PlaneGeometry width/height)
+      const floorGeometry = this.#floor_.geometry;
+      const floorWidth = floorGeometry.parameters.width;
+      const floorHeight = floorGeometry.parameters.height;
+
+      // Calculate boundary limits with threshold
+      const halfWidth = floorWidth / 2 - this.#boundaryThreshold_;
+      const halfHeight = floorHeight / 2 - this.#boundaryThreshold_;
+
+      // Clamp position to stay within boundaries
+      newPosition.x = THREE.MathUtils.clamp(
+        newPosition.x,
+        -halfWidth,
+        halfWidth
+      );
+      newPosition.z = THREE.MathUtils.clamp(
+        newPosition.z,
+        -halfHeight,
+        halfHeight
+      );
+    }
+
     // NOTE: Make sure to apply the quaternion (character's rotation) first
     // Moves the character forward/backward
-    this.#characterGroup_.position.add(velocity);
+    this.#characterGroup_.position.copy(newPosition);
     // Rotates the character in place left/right
     this.#characterGroup_.rotateY(angle);
   }
@@ -891,6 +936,11 @@ class Project extends App {
     this.#updateCharacterItems_(totalElapsedTime);
     this.#updateCamera_(elapsedTime);
     this.#updateSun_(elapsedTime);
+  }
+
+  // Getter for boundary threshold (can be referenced elsewhere)
+  get BoundaryThreshold() {
+    return this.#boundaryThreshold_;
   }
 }
 
