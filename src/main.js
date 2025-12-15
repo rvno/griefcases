@@ -58,7 +58,7 @@ class Project extends App {
     this.#inputs_ = new InputManager();
     this.#inputs_.initialize();
 
-    // 3rd Person Camera
+    // 3rd Person Camera (pass Pane which may be null in production)
     this.#setup3rdCamera_(this.Pane);
   }
 
@@ -85,17 +85,19 @@ class Project extends App {
     this.Scene.add(light.target);
     this.#sun_ = light;
 
-    // Add a light tweak pane folder
-    const lightFolder = this.Pane.addFolder({ title: "Sunlight" });
-    lightFolder.addBinding(this.#sun_, "color", {
-      view: "color",
-      color: { type: "float" },
-    });
-    lightFolder.addBinding(this.#sun_, "intensity", {
-      min: 0,
-      max: 5,
-      step: 0.01,
-    });
+    // Add a light tweak pane folder (only in dev mode)
+    if (this.Pane) {
+      const lightFolder = this.Pane.addFolder({ title: "Sunlight" });
+      lightFolder.addBinding(this.#sun_, "color", {
+        view: "color",
+        color: { type: "float" },
+      });
+      lightFolder.addBinding(this.#sun_, "intensity", {
+        min: 0,
+        max: 5,
+        step: 0.01,
+      });
+    }
 
     // Add ground mesh
     const groundGeometry = new THREE.PlaneGeometry(20, 20);
@@ -157,7 +159,9 @@ class Project extends App {
     );
     this.Scene.add(turtle);
     const forcefield = this.#createForceFieldForModel_(turtle);
-    this.#createModelBinding_("turtle", turtle, this.Pane, turtleParams);
+    if (this.Pane) {
+      this.#createModelBinding_("turtle", turtle, this.Pane, turtleParams);
+    }
     this.#objects_.push({
       name: "turtle",
       mesh: turtle,
@@ -271,46 +275,48 @@ class Project extends App {
     this.#forceFieldBaseMaterial_.depthWrite = false;
     this.#forceFieldBaseMaterial_.blending = THREE.AdditiveBlending;
 
-    // Create forcefield tweak pane folder
-    const forceFieldFolder = this.Pane.addFolder({ title: "Forcefield" });
+    // Create forcefield tweak pane folder (only in dev mode)
+    if (this.Pane) {
+      const forceFieldFolder = this.Pane.addFolder({ title: "Forcefield" });
 
-    // Custom params for tweakpane
-    const forceFieldParams = {
-      color1: { r: 0.02, g: 0.11, b: 0.2 },
-      color2: { r: 0.03, g: 0.21, b: 0.44 },
-    };
+      // Custom params for tweakpane
+      const forceFieldParams = {
+        color1: { r: 0.02, g: 0.11, b: 0.2 },
+        color2: { r: 0.03, g: 0.21, b: 0.44 },
+      };
 
-    forceFieldFolder
-      .addBinding(forceFieldParams, "color1", {
-        view: "color",
-        color: { type: "float" },
-      })
-      .on("change", (evt) => {
-        // Update all forcefield materials
-        this.#forceFieldMaterials_.forEach((material) => {
-          material.uniforms.color1.value.set(
-            evt.value.r,
-            evt.value.g,
-            evt.value.b
-          );
+      forceFieldFolder
+        .addBinding(forceFieldParams, "color1", {
+          view: "color",
+          color: { type: "float" },
+        })
+        .on("change", (evt) => {
+          // Update all forcefield materials
+          this.#forceFieldMaterials_.forEach((material) => {
+            material.uniforms.color1.value.set(
+              evt.value.r,
+              evt.value.g,
+              evt.value.b
+            );
+          });
         });
-      });
 
-    forceFieldFolder
-      .addBinding(forceFieldParams, "color2", {
-        view: "color",
-        color: { type: "float" },
-      })
-      .on("change", (evt) => {
-        // Update all forcefield materials
-        this.#forceFieldMaterials_.forEach((material) => {
-          material.uniforms.color2.value.set(
-            evt.value.r,
-            evt.value.g,
-            evt.value.b
-          );
+      forceFieldFolder
+        .addBinding(forceFieldParams, "color2", {
+          view: "color",
+          color: { type: "float" },
+        })
+        .on("change", (evt) => {
+          // Update all forcefield materials
+          this.#forceFieldMaterials_.forEach((material) => {
+            material.uniforms.color2.value.set(
+              evt.value.r,
+              evt.value.g,
+              evt.value.b
+            );
+          });
         });
-      });
+    }
   }
 
   async #setupDepth_() {
@@ -507,87 +513,89 @@ class Project extends App {
       rotFactor: 0.2,
     };
 
-    const charFolder = this.Pane.addFolder({ title: "Character" });
-    // NOTE: boolean params can just follow `addBinding(paramObject, paramProperty)`
-    charFolder
-      .addBinding(this.#character_.customParams, "wireframe")
-      .on("change", (evt) => {
-        this.#character_.traverse((c) => {
-          if (c.isMesh) {
-            c.material.wireframe = evt.value;
-          }
+    // Only add Tweakpane controls in dev mode
+    if (this.Pane) {
+      const charFolder = this.Pane.addFolder({ title: "Character" });
+      // NOTE: boolean params can just follow `addBinding(paramObject, paramProperty)`
+      charFolder
+        .addBinding(this.#character_.customParams, "wireframe")
+        .on("change", (evt) => {
+          this.#character_.traverse((c) => {
+            if (c.isMesh) {
+              c.material.wireframe = evt.value;
+            }
+          });
         });
-      });
-    // NOTE: transparent + opacity are tied together, must have transparent true for opacity to kick in
-    charFolder
-      .addBinding(this.#character_.customParams, "transparent")
-      .on("change", (evt) => {
-        this.#character_.traverse((c) => {
-          if (c.isMesh) {
-            c.material.transparent = evt.value;
-            c.material.needsUpdate = true;
-          }
+      // NOTE: transparent + opacity are tied together, must have transparent true for opacity to kick in
+      charFolder
+        .addBinding(this.#character_.customParams, "transparent")
+        .on("change", (evt) => {
+          this.#character_.traverse((c) => {
+            if (c.isMesh) {
+              c.material.transparent = evt.value;
+              c.material.needsUpdate = true;
+            }
+          });
         });
-      });
-    // NOTE: params with ranges can follow `addBinding(paramObject, paramProperty, {min: min, max: max, step: step})`
-    charFolder
-      .addBinding(this.#character_.customParams, "opacity", {
+      // NOTE: params with ranges can follow `addBinding(paramObject, paramProperty, {min: min, max: max, step: step})`
+      charFolder
+        .addBinding(this.#character_.customParams, "opacity", {
+          min: 0,
+          max: 1,
+          step: 0.01,
+        })
+        .on("change", (evt) => {
+          this.#character_.traverse((c) => {
+            if (c.isMesh) {
+              c.material.opacity = evt.value;
+            }
+          });
+        });
+
+      // NOTE: color param has a "view" object where you can set a colorpicker
+      // NOTE: we're not using this since we're now using a model
+      //  - it looks like it matches the paramObject structure(r,g,b) in our case for THREE.Color
+      // charFolder
+      //   .addBinding(this.#character_.customParams, "color", {
+      //     view: "color",
+      //     color: { type: "float" },
+      //   })
+      //   .on("change", (evt) => {
+      //     this.#character_.traverse((c) => {
+      //       if (c.isMesh) {
+      //         c.material.color.set(evt.value);
+      //       }
+      //     });
+      //   });
+      charFolder
+        .addBinding(this.#character_.customParams, "position")
+        .on("change", (evt) => {
+          const currentValue = evt.value;
+          this.#character_.position.set(evt.value.x, evt.value.y, evt.value.z);
+
+          // Find the difference between previous and current position
+          const deltaVec = new THREE.Vector3().subVectors(
+            new THREE.Vector3().copy(currentValue),
+            new THREE.Vector3().copy(previousValues.position)
+          );
+
+          // Update additional parts position by adding the deltaVec
+          boxMesh1.position.add(deltaVec);
+          boxMesh2.position.add(deltaVec);
+          boxMesh3.position.add(deltaVec);
+
+          // Update previous position for next change
+          previousValues.position = { ...currentValue };
+        });
+      charFolder.addBinding(this.#character_.customParams, "rotFactor", {
         min: 0,
-        max: 1,
+        max: 3,
         step: 0.01,
-      })
-      .on("change", (evt) => {
-        this.#character_.traverse((c) => {
-          if (c.isMesh) {
-            c.material.opacity = evt.value;
-          }
-        });
       });
-
-    // NOTE: color param has a "view" object where you can set a colorpicker
-    // NOTE: we're not using this since we're now using a model
-    //  - it looks like it matches the paramObject structure(r,g,b) in our case for THREE.Color
-    // charFolder
-    //   .addBinding(this.#character_.customParams, "color", {
-    //     view: "color",
-    //     color: { type: "float" },
-    //   })
-    //   .on("change", (evt) => {
-    //     this.#character_.traverse((c) => {
-    //       if (c.isMesh) {
-    //         c.material.color.set(evt.value);
-    //       }
-    //     });
-    //   });
-    charFolder
-      .addBinding(this.#character_.customParams, "position")
-      .on("change", (evt) => {
-        const currentValue = evt.value;
-        this.#character_.position.set(evt.value.x, evt.value.y, evt.value.z);
-
-        // Find the difference between previous and current position
-        const deltaVec = new THREE.Vector3().subVectors(
-          new THREE.Vector3().copy(currentValue),
-          new THREE.Vector3().copy(previousValues.position)
-        );
-
-        // Update additional parts position by adding the deltaVec
-        boxMesh1.position.add(deltaVec);
-        boxMesh2.position.add(deltaVec);
-        boxMesh3.position.add(deltaVec);
-
-        // Update previous position for next change
-        previousValues.position = { ...currentValue };
-      });
-    charFolder.addBinding(this.#character_.customParams, "rotFactor", {
-      min: 0,
-      max: 3,
-      step: 0.01,
-    });
+    }
   }
 
   async #setupEnvironment_() {
-    const bgFolder = this.Pane.addFolder({ title: "Background" });
     this.Scene.backgroundBlurriness = 0.4;
     this.Scene.backgroundIntensity = 0.5;
     this.Scene.environmentIntensity = 0.5;
@@ -603,49 +611,54 @@ class Project extends App {
       this.#environment_.customParams.fogDensity
     );
 
-    bgFolder
-      .addBinding(this.#environment_.customParams, "fogColor", {
-        view: "color",
-        color: { type: "float" },
-      })
-      .on("change", (evt) => {
-        this.Scene.fog.color.set(evt.value.r, evt.value.g, evt.value.b);
-      });
-    bgFolder
-      .addBinding(this.#environment_.customParams, "fogDensity", {
+    // Only add Tweakpane controls in dev mode
+    if (this.Pane) {
+      const bgFolder = this.Pane.addFolder({ title: "Background" });
+
+      bgFolder
+        .addBinding(this.#environment_.customParams, "fogColor", {
+          view: "color",
+          color: { type: "float" },
+        })
+        .on("change", (evt) => {
+          this.Scene.fog.color.set(evt.value.r, evt.value.g, evt.value.b);
+        });
+      bgFolder
+        .addBinding(this.#environment_.customParams, "fogDensity", {
+          min: 0,
+          max: 1,
+          step: 0.001,
+        })
+        .on("change", (evt) => {
+          this.Scene.fog.density = evt.value;
+        });
+      bgFolder
+        .addBinding(this.#environment_.customParams, "hdrTexture", {
+          options: {
+            "Autumn Field": "autumn_field_puresky_1k.hdr",
+            "Rosendal Park Sunset": "rosendal_park_sunset_1k.hdr",
+            "Zwartkops Sunset": "zwartkops_straight_sunset_1k.hdr",
+          },
+        })
+        .on("change", (evt) => {
+          this.LoadHDR_(`./skybox/${evt.value}`);
+        });
+      bgFolder.addBinding(this.Scene, "backgroundBlurriness", {
         min: 0,
         max: 1,
-        step: 0.001,
-      })
-      .on("change", (evt) => {
-        this.Scene.fog.density = evt.value;
+        step: 0.01,
       });
-    bgFolder
-      .addBinding(this.#environment_.customParams, "hdrTexture", {
-        options: {
-          "Autumn Field": "autumn_field_puresky_1k.hdr",
-          "Rosendal Park Sunset": "rosendal_park_sunset_1k.hdr",
-          "Zwartkops Sunset": "zwartkops_straight_sunset_1k.hdr",
-        },
-      })
-      .on("change", (evt) => {
-        this.LoadHDR_(`./skybox/${evt.value}`);
+      bgFolder.addBinding(this.Scene, "backgroundIntensity", {
+        min: 0,
+        max: 1,
+        step: 0.01,
       });
-    bgFolder.addBinding(this.Scene, "backgroundBlurriness", {
-      min: 0,
-      max: 1,
-      step: 0.01,
-    });
-    bgFolder.addBinding(this.Scene, "backgroundIntensity", {
-      min: 0,
-      max: 1,
-      step: 0.01,
-    });
-    bgFolder.addBinding(this.Scene, "environmentIntensity", {
-      min: 0,
-      max: 1,
-      step: 0.01,
-    });
+      bgFolder.addBinding(this.Scene, "environmentIntensity", {
+        min: 0,
+        max: 1,
+        step: 0.01,
+      });
+    }
 
     await this.LoadHDR_(
       `./skybox/${this.#environment_.customParams.hdrTexture}`

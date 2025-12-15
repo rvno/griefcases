@@ -64,3 +64,67 @@
 - noise and background adjustments
 - set scrolltrigger to handle updating background-color blend based on active section
 - tie scroll progress to invert and brightness filters
+
+## 12-15-24
+
+### Asset Path Management System
+
+Implemented unified asset path management system using Vite's built-in public directory handling:
+
+- **Created `vite.config.js`** - Configured Vite build settings:
+  - Set `base: "./"` for relative paths in production
+  - Set `publicDir: "public"` to specify static assets source
+  - Set `copyPublicDir: true` to copy public/ contents to dist/
+  - Configured `assetFileNames` to preserve directory structure (sounds/, imgs/, masks/, textures/)
+
+- **Created `src/utils/asset-path.js`** - Helper function that:
+  - Strips `public/` prefix from paths
+  - Returns absolute paths from root (`/sounds/...`, `/imgs/...`)
+  - Works seamlessly in both dev (serves from `public/`) and prod (serves from `dist/`)
+
+- **Created `src/update-html-paths.js`** - Runtime script that:
+  - Converts HTML `<img>` tags from `public/` to `/` paths
+  - Auto-runs on DOM load to update all image references
+
+- **Updated CSS paths** - Changed all `url("public/...)` to `url("/...")` in base.css:
+  - Background images, mask images, and SVG masks now use absolute paths
+  - Vite handles correct resolution in both environments
+
+- **Updated JavaScript asset loading**:
+  - `src/audio-manager.js` - Audio tracks use `getAssetPath()` helper
+  - `src/loader.js` - All 474 Nala image paths use `getAssetPath()`
+  - `src/main.js` - Texture loading uses `getAssetPath()`
+
+- **Key Benefits**:
+  - Same paths work in dev (`npm run dev`) and prod (`npm run build`)
+  - No environment-specific conditionals needed
+  - Automatic asset copying to dist/ during build
+  - Preserved directory structure for organized assets
+
+### Development Tools Conditional Loading
+
+Implemented environment-based conditional loading for development tools to keep production builds clean:
+
+- **Modified `src/app.js`** - Base App class now checks `import.meta.env.DEV`:
+  - Stats.js panel only initialized in development mode
+  - Tweakpane only created in development mode
+  - Post-processing effect controls wrapped in dev-mode checks
+  - `#raf_()` method conditionally updates stats only when available
+
+- **Modified `src/main.js`** - All Tweakpane controls wrapped in `if (this.Pane)` checks:
+  - Sunlight controls (color, intensity)
+  - Forcefield controls (color1, color2)
+  - Character controls (wireframe, opacity, position, rotFactor)
+  - Environment controls (fog color/density, HDR texture, background settings)
+  - Model binding debug controls
+
+- **Modified `src/third-person-camera.js`** - Camera debug controls conditional:
+  - Camera folder only created when pane is available
+  - Lerp factor, offset, and look-at bindings wrapped in dev check
+
+- **Benefits**:
+  - Cleaner production UI (no debug panels)
+  - Smaller bundle size (Tweakpane and Stats not included in prod)
+  - Better performance (no debug overhead in production)
+  - Same codebase for both environments
+  - Full debug tools available during development

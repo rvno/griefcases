@@ -573,7 +573,6 @@ section {
 .tp-dfwv {
   position: fixed !important;
   z-index: 11;
-  display: none;
 }
 
 /* masked sections */
@@ -620,8 +619,7 @@ section {
 }
 
 .mask-container--infinity {
-  -webkit-mask: url("/masks/black-infinity-leash-solid.svg") center
-    no-repeat;
+  -webkit-mask: url("/masks/black-infinity-leash-solid.svg") center no-repeat;
   mask: url("/masks/black-infinity-leash-solid.svg") center no-repeat;
 }
 

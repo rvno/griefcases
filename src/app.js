@@ -66,24 +66,29 @@ class App {
    * Project setup
    * - calls setupThree for setup
    * - calls setupBasicScene to add to the scene
-   * - calls setupPane & Stats for debug/perf monitoring
+   * - calls setupPane & Stats for debug/perf monitoring (dev only)
    * - instantiates the InputManager class
    */
   async #setupProject_() {
-    // Debug & Performance
-    this.#setupPane_();
-    this.#setupStats_();
+    // Debug & Performance (only in development)
+    const isDev = import.meta.env.DEV;
+    if (isDev) {
+      this.#setupPane_();
+      this.#setupStats_();
+    }
 
     this.#setupThree_();
 
     await this.#setupLoaders_();
 
     // Initialize post fx
-
-    const postFXFolder = this.#pane_.addFolder({
-      title: "PostFX",
-      expanded: false,
-    });
+    let postFXFolder = null;
+    if (isDev && this.#pane_) {
+      postFXFolder = this.#pane_.addFolder({
+        title: "PostFX",
+        expanded: false,
+      });
+    }
 
     await this.#setupPostProcessing_(postFXFolder);
 
@@ -218,7 +223,10 @@ class App {
       this.#step_(elapsedTime);
       this.#render_();
 
-      this.#stats_.update();
+      // Only update stats in development
+      if (this.#stats_) {
+        this.#stats_.update();
+      }
 
       this.#raf_();
     });
@@ -256,7 +264,7 @@ class App {
    * - we create a composer that takes at a minimum -  render and output pass
    * - we then create passes for the different effects
    * - those get added to the composer
-   * @param {*} pane
+   * @param {*} pane - Tweakpane folder (only available in dev mode, can be null)
    */
   async #setupPostProcessing_(pane) {
     this.#composer_ = this.createComposer();
@@ -283,51 +291,59 @@ class App {
 
     // Vignette Pass
     const vignettePass = new ShaderPass(shaderData);
-    const shaderOptions = {
-      intensity: shaderData.uniforms.intensity.value,
-      dropoff: shaderData.uniforms.dropoff.value,
-    };
-    const shaderFolder = pane.addFolder({ title: "vignette" });
-    shaderFolder.addBinding(vignettePass, "enabled");
-    shaderFolder
-      .addBinding(shaderOptions, "intensity", { min: 0.0, max: 1.0 })
-      .on("change", (e) => {
-        vignettePass.material.uniforms.intensity.value = e.value;
-      });
-    shaderFolder
-      .addBinding(shaderOptions, "dropoff", { min: 0.0, max: 1.0 })
-      .on("change", (e) => {
-        vignettePass.material.uniforms.dropoff.value = e.value;
-      });
+
+    // Only add Tweakpane controls in dev mode
+    if (pane) {
+      const shaderOptions = {
+        intensity: shaderData.uniforms.intensity.value,
+        dropoff: shaderData.uniforms.dropoff.value,
+      };
+      const shaderFolder = pane.addFolder({ title: "vignette" });
+      shaderFolder.addBinding(vignettePass, "enabled");
+      shaderFolder
+        .addBinding(shaderOptions, "intensity", { min: 0.0, max: 1.0 })
+        .on("change", (e) => {
+          vignettePass.material.uniforms.intensity.value = e.value;
+        });
+      shaderFolder
+        .addBinding(shaderOptions, "dropoff", { min: 0.0, max: 1.0 })
+        .on("change", (e) => {
+          vignettePass.material.uniforms.dropoff.value = e.value;
+        });
+    }
 
     // Bloom Pass
     const simonBloom = new BloomPass();
-    const simonFolder = pane.addFolder({ title: "Bloom" });
-    simonFolder.addBinding(simonBloom, "enabled");
-    const prefilterFolder = simonFolder.addFolder({
-      title: "Prefilter",
-      expanded: false,
-    });
-    prefilterFolder.addBinding(simonBloom.Settings.render, "brightness", {
-      min: 0.0,
-      max: 2.0,
-    });
-    prefilterFolder.addBinding(simonBloom.Settings.render, "contrast", {
-      min: 0.0,
-      max: 2.0,
-    });
-    prefilterFolder.addBinding(simonBloom.Settings.render, "saturation", {
-      min: 0.0,
-      max: 2.0,
-    });
-    simonFolder.addBinding(simonBloom.Settings.composite, "strength", {
-      min: 0.0,
-      max: 2.0,
-    });
-    simonFolder.addBinding(simonBloom.Settings.composite, "mixFactor", {
-      min: 0.0,
-      max: 1.0,
-    });
+
+    // Only add Tweakpane controls in dev mode
+    if (pane) {
+      const simonFolder = pane.addFolder({ title: "Bloom" });
+      simonFolder.addBinding(simonBloom, "enabled");
+      const prefilterFolder = simonFolder.addFolder({
+        title: "Prefilter",
+        expanded: false,
+      });
+      prefilterFolder.addBinding(simonBloom.Settings.render, "brightness", {
+        min: 0.0,
+        max: 2.0,
+      });
+      prefilterFolder.addBinding(simonBloom.Settings.render, "contrast", {
+        min: 0.0,
+        max: 2.0,
+      });
+      prefilterFolder.addBinding(simonBloom.Settings.render, "saturation", {
+        min: 0.0,
+        max: 2.0,
+      });
+      simonFolder.addBinding(simonBloom.Settings.composite, "strength", {
+        min: 0.0,
+        max: 2.0,
+      });
+      simonFolder.addBinding(simonBloom.Settings.composite, "mixFactor", {
+        min: 0.0,
+        max: 1.0,
+      });
+    }
 
     this.#composer_.addPass(renderPass);
     this.#composer_.addPass(simonBloom);

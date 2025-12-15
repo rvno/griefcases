@@ -27,15 +27,17 @@ class ThirdPersonCamera {
     this.#currentPosition_.copy(this.#calculateIdealCameraPosition_());
     this.#currentLookAt_.copy(this.#calculateIdealCameraLookAt_());
 
-    // Debug Params
-    const cameraFolder = pane.addFolder({ title: "Camera" });
-    cameraFolder.addBinding(this.#options_, "cameraLerpFactor", {
-      min: 0.01,
-      max: 0.5,
-      step: 0.01,
-    });
-    cameraFolder.addBinding(this.#options_, "idealOffset_");
-    cameraFolder.addBinding(this.#options_, "idealLookAt_");
+    // Debug Params (only in dev mode)
+    if (pane) {
+      const cameraFolder = pane.addFolder({ title: "Camera" });
+      cameraFolder.addBinding(this.#options_, "cameraLerpFactor", {
+        min: 0.01,
+        max: 0.5,
+        step: 0.01,
+      });
+      cameraFolder.addBinding(this.#options_, "idealOffset_");
+      cameraFolder.addBinding(this.#options_, "idealLookAt_");
+    }
   }
 
   /**
