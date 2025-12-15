@@ -486,10 +486,11 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
-  const loaderProgress = document.createElement("div");
-  const logoContainer = loaderDiv.querySelector(".logo-container");
-  loaderProgress.classList.add("loader__progress");
-  logoContainer.appendChild(loaderProgress);
+  const loaderProgress = document.querySelector(".loader__progress");
+  const loaderTextBg = loaderProgress.querySelector(".loader__text-bg");
+  const loaderTextFg = loaderProgress.querySelector(".loader__text-fg");
+  const loaderInstruction = loaderProgress.querySelector(".loader__instruction");
+  const mainOverlay = document.querySelector(".main-overlay");
 
   // Get all logo elements
   const logos = [
@@ -564,10 +565,11 @@ document.addEventListener("DOMContentLoaded", () => {
     },
   });
 
-  // Update loader percentage
+  // Update loader text fill progress
   function updateLoader() {
-    const percentage = Math.round((loadedCount / totalImages) * 100);
-    loaderProgress.textContent = `${percentage}%`;
+    const percentage = (loadedCount / totalImages) * 100;
+    const fillPercentage = 100 - percentage;
+    loaderTextFg.style.clipPath = `inset(0 ${fillPercentage}% 0 0)`;
   }
 
   // Load a single image and return a promise
@@ -683,15 +685,40 @@ document.addEventListener("DOMContentLoaded", () => {
         );
       });
 
-      // Fade out progress text
+      // Fade out loading text (bg and fg)
       exitTimeline.to(
-        loaderProgress,
+        [loaderTextBg, loaderTextFg],
         {
           opacity: 0,
-          duration: 0.4,
+          duration: 0.6,
           ease: "power2.inOut",
         },
-        0.2 // start slightly before logo animations
+        0.8 // start after shapes begin appearing
+      );
+
+      // Fade in instruction text
+      exitTimeline.to(
+        loaderInstruction,
+        {
+          opacity: 1,
+          duration: 0.8,
+          ease: "power2.out",
+        },
+        2.0 // after all shapes have appeared
+      );
+
+      // Fade in navbar
+      exitTimeline.to(
+        mainOverlay,
+        {
+          opacity: 1,
+          duration: 1.0,
+          ease: "power2.out",
+          onStart: () => {
+            mainOverlay.style.pointerEvents = "auto";
+          },
+        },
+        2.2 // slightly after instruction text starts
       );
     }, 1000); // 1 second delay at 100%
   });

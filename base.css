@@ -83,8 +83,45 @@ img {
 }
 
 .loader__progress {
-  width: 100%;
+  position: absolute;
+  bottom: 20vh;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  max-width: 600px;
   text-align: center;
+}
+
+.loader__text-bg,
+.loader__text-fg {
+  font-size: clamp(1rem, 3vw, 1.5rem);
+  font-weight: 300;
+  letter-spacing: 0.05em;
+  text-transform: lowercase;
+  line-height: 1.4;
+}
+
+.loader__text-bg {
+  color: rgba(255, 255, 255, 0.2);
+}
+
+.loader__text-fg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  color: rgba(255, 255, 255, 0.9);
+  clip-path: inset(0 100% 0 0);
+  transition: clip-path 0.3s ease-out;
+}
+
+.loader__instruction {
+  opacity: 0;
+  font-size: clamp(0.875rem, 2.5vw, 1.125rem);
+  font-weight: 300;
+  letter-spacing: 0.03em;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .logo-container {
@@ -93,7 +130,7 @@ img {
   justify-content: space-between;
   height: 100%;
   width: 100%;
-  padding: 10vw;
+  padding: 5vw 10vw;
   position: relative;
   flex-wrap: wrap;
 }
@@ -660,6 +697,7 @@ section {
   justify-content: center;
   align-items: flex-end;
   padding-bottom: 2rem;
+  opacity: 0;
 }
 
 .section-nav {
