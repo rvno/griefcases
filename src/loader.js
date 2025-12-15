@@ -5,19 +5,45 @@ import gsap from "gsap";
 const nalaImagePaths = [
   getAssetPath("imgs/nala/00000IMG_00000_BURST20190125134552322_COVER.webp"),
   getAssetPath("imgs/nala/00000PORTRAIT_00000_BURST20191007194801357.webp"),
-  getAssetPath("imgs/nala/00100lPORTRAIT_00100_BURST20190108220720943_COVER.webp"),
-  getAssetPath("imgs/nala/00100lPORTRAIT_00100_BURST20190121220207728_COVER.webp"),
-  getAssetPath("imgs/nala/00100lPORTRAIT_00100_BURST20190123182244791_COVER.webp"),
-  getAssetPath("imgs/nala/00100lPORTRAIT_00100_BURST20190123182252914_COVER.webp"),
-  getAssetPath("imgs/nala/00100lPORTRAIT_00100_BURST20190126160337666_COVER.webp"),
-  getAssetPath("imgs/nala/00100lPORTRAIT_00100_BURST20190507172411394_COVER.webp"),
-  getAssetPath("imgs/nala/00100lPORTRAIT_00100_BURST20190512221959995_COVER.webp"),
-  getAssetPath("imgs/nala/00100lPORTRAIT_00100_BURST20191001205301423_COVER.webp"),
-  getAssetPath("imgs/nala/00100lrPORTRAIT_00100_BURST20191120171431575_COVER.webp"),
-  getAssetPath("imgs/nala/00100lrPORTRAIT_00100_BURST20200225172446894_COVER.webp"),
-  getAssetPath("imgs/nala/00100lrPORTRAIT_00100_BURST20200414102654101_COVER.webp"),
-  getAssetPath("imgs/nala/00100lrPORTRAIT_00100_BURST20200615175621804_COVER.webp"),
-  getAssetPath("imgs/nala/00100lrPORTRAIT_00100_BURST20200727223427356_COVER.webp"),
+  getAssetPath(
+    "imgs/nala/00100lPORTRAIT_00100_BURST20190108220720943_COVER.webp"
+  ),
+  getAssetPath(
+    "imgs/nala/00100lPORTRAIT_00100_BURST20190121220207728_COVER.webp"
+  ),
+  getAssetPath(
+    "imgs/nala/00100lPORTRAIT_00100_BURST20190123182244791_COVER.webp"
+  ),
+  getAssetPath(
+    "imgs/nala/00100lPORTRAIT_00100_BURST20190123182252914_COVER.webp"
+  ),
+  getAssetPath(
+    "imgs/nala/00100lPORTRAIT_00100_BURST20190126160337666_COVER.webp"
+  ),
+  getAssetPath(
+    "imgs/nala/00100lPORTRAIT_00100_BURST20190507172411394_COVER.webp"
+  ),
+  getAssetPath(
+    "imgs/nala/00100lPORTRAIT_00100_BURST20190512221959995_COVER.webp"
+  ),
+  getAssetPath(
+    "imgs/nala/00100lPORTRAIT_00100_BURST20191001205301423_COVER.webp"
+  ),
+  getAssetPath(
+    "imgs/nala/00100lrPORTRAIT_00100_BURST20191120171431575_COVER.webp"
+  ),
+  getAssetPath(
+    "imgs/nala/00100lrPORTRAIT_00100_BURST20200225172446894_COVER.webp"
+  ),
+  getAssetPath(
+    "imgs/nala/00100lrPORTRAIT_00100_BURST20200414102654101_COVER.webp"
+  ),
+  getAssetPath(
+    "imgs/nala/00100lrPORTRAIT_00100_BURST20200615175621804_COVER.webp"
+  ),
+  getAssetPath(
+    "imgs/nala/00100lrPORTRAIT_00100_BURST20200727223427356_COVER.webp"
+  ),
   getAssetPath("imgs/nala/01HWCATK17F20WARDCGPQPD1FV-low-res-branded-.webp"),
   getAssetPath("imgs/nala/1960960969680338124.webp"),
   getAssetPath("imgs/nala/8ae6494a19ad790d468d8dcb92296f6d.webp"),
@@ -375,7 +401,9 @@ const nalaImagePaths = [
   getAssetPath("imgs/nala/PXL_20210724_012354545.MP.webp"),
   getAssetPath("imgs/nala/PXL_20210904_232349773.MP.webp"),
   getAssetPath("imgs/nala/PXL_20210905_000624001.MP.webp"),
-  getAssetPath("imgs/nala/PXL_20210905_002043356_exported_699_1681886494344.webp"),
+  getAssetPath(
+    "imgs/nala/PXL_20210905_002043356_exported_699_1681886494344.webp"
+  ),
   getAssetPath("imgs/nala/PXL_20210905_220847202.MP.webp"),
   getAssetPath("imgs/nala/PXL_20210905_220925468.MP.webp"),
   getAssetPath("imgs/nala/PXL_20210914_031352638.MP.webp"),
@@ -471,12 +499,16 @@ const nalaImagePaths = [
   getAssetPath("imgs/nala/Photo on 12-10-17 at 3.48 PM.webp"),
   getAssetPath("imgs/nala/Screenshot_20190522-075034.webp"),
   getAssetPath("imgs/nala/Screenshot_20190606-200418.webp"),
-  getAssetPath("imgs/nala/att.cl5GfmNi91zc8UFIGaX3H0U_gk1obCZ34R4CbqImRUQ.webp"),
+  getAssetPath(
+    "imgs/nala/att.cl5GfmNi91zc8UFIGaX3H0U_gk1obCZ34R4CbqImRUQ.webp"
+  ),
   getAssetPath("imgs/nala/received_300199138145485.webp"),
   getAssetPath("imgs/nala/received_360380075417558.webp"),
 ];
 
 document.addEventListener("DOMContentLoaded", () => {
+  const isScrolled = false;
+
   // Prevent scrolling initially
   document.body.setAttribute("data-lenis-prevent", true);
 
@@ -489,7 +521,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const loaderProgress = document.querySelector(".loader__progress");
   const loaderTextBg = loaderProgress.querySelector(".loader__text-bg");
   const loaderTextFg = loaderProgress.querySelector(".loader__text-fg");
-  const loaderInstruction = loaderProgress.querySelector(".loader__instruction");
+  const loaderInstruction = loaderProgress.querySelector(
+    ".loader__instruction"
+  );
   const mainOverlay = document.querySelector(".main-overlay");
 
   // Get all logo elements
