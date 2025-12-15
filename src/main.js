@@ -13,6 +13,7 @@ class Project extends App {
   #sun_ = null;
   #character_ = null;
   #characterGroup_ = null;
+  #characterItems_ = []; // Orbiting items around character
   #objects_ = [];
 
   // Environment
@@ -469,24 +470,50 @@ class Project extends App {
     // char.receiveShadow = true;
 
     // create character parts
-    const boxGeo = new THREE.BoxGeometry(0.1, 0.1, 0.1);
-    const boxMat1 = new THREE.MeshStandardMaterial({ color: 0xff8080 });
+    const boxGeo = new THREE.CylinderGeometry(0.27, 0.05, 0.5, 8);
+    const boxMat1 = new THREE.MeshStandardMaterial({
+      color: 0xff8080,
+      transparent: true,
+      opacity: 0.7,
+    });
     const boxMesh1 = new THREE.Mesh(boxGeo, boxMat1);
-    boxMesh1.position.set(0.75, 0.75, 0);
+    boxMesh1.scale.setScalar(0.35); // Scale down by 65% (35% of original)
+    boxMesh1.position.set(0.75, 0.25, 0);
     boxMesh1.castShadow = true;
     boxMesh1.receiveShadow = true;
 
-    const boxMat2 = new THREE.MeshStandardMaterial({ color: 0x8080ff });
+    const boxMat2 = new THREE.MeshStandardMaterial({
+      color: 0x8080ff,
+      transparent: true,
+      opacity: 0.35,
+    });
     const boxMesh2 = new THREE.Mesh(boxGeo, boxMat2);
-    boxMesh2.position.set(-0.75, 0.75, 0);
+    boxMesh2.scale.setScalar(0.35); // Scale down by 65% (35% of original)
+    boxMesh2.position.set(-0.75, 0.25, 0);
     boxMesh2.castShadow = true;
     boxMesh2.receiveShadow = true;
 
-    const boxMat3 = new THREE.MeshStandardMaterial({ color: 0x80ff80 });
+    const boxMat3 = new THREE.MeshStandardMaterial({
+      color: 0x80ff80,
+      transparent: true,
+      opacity: 0.15,
+    });
     const boxMesh3 = new THREE.Mesh(boxGeo, boxMat3);
-    boxMesh3.position.set(0, 0.75, 0.75);
+    boxMesh3.scale.setScalar(0.35); // Scale down by 65% (35% of original)
+    boxMesh3.position.set(0, 0.55, -0.75);
     boxMesh3.castShadow = true;
     boxMesh3.receiveShadow = true;
+
+    const boxMat4 = new THREE.MeshStandardMaterial({
+      color: 0xffff80,
+      transparent: true,
+      opacity: 0.5,
+    });
+    const boxMesh4 = new THREE.Mesh(boxGeo, boxMat4);
+    boxMesh4.scale.setScalar(0.35); // Scale down by 65% (35% of original)
+    boxMesh4.position.set(-0.75, 0.25, -0.75);
+    boxMesh4.castShadow = true;
+    boxMesh4.receiveShadow = true;
 
     // Assemble character parts
     // charGroup.add(char);
@@ -494,10 +521,61 @@ class Project extends App {
     charGroup.add(boxMesh1);
     charGroup.add(boxMesh2);
     charGroup.add(boxMesh3);
+    charGroup.add(boxMesh4);
 
     this.#character_ = giraffe;
     this.#characterGroup_ = charGroup;
     this.Scene.add(charGroup);
+
+    // Store character items for orbital animation
+    // Each item stores: mesh, initial distance from center, initial angle, oscillation offset
+    // Items are positioned at the corners of a square around the character
+    this.#characterItems_ = [
+      {
+        mesh: boxMesh1,
+        distance: Math.sqrt(0.75 * 0.75 + 0.75 * 0.75), // diagonal distance (corner of square)
+        angle: Math.atan2(0.75, 0.75), // Top-right corner (45°)
+        baseY: 0.25, // base Y position
+        oscillationSpeed: 1.0, // oscillation frequency multiplier
+        oscillationAmount: 0.3, // how much it moves up/down
+        orbitSpeed: 0.5, // rotation speed multiplier
+        visible: true, // render toggle
+        name: "Item 1 (Red)", // for UI
+      },
+      {
+        mesh: boxMesh2,
+        distance: Math.sqrt(0.75 * 0.75 + 0.75 * 0.75), // diagonal distance (corner of square)
+        angle: Math.atan2(0.75, -0.75), // Top-left corner (135°)
+        baseY: 0.25,
+        oscillationSpeed: 1.3,
+        oscillationAmount: 0.25,
+        orbitSpeed: 0.5,
+        visible: true, // render toggle
+        name: "Item 2 (Blue)", // for UI
+      },
+      {
+        mesh: boxMesh3,
+        distance: Math.sqrt(0.75 * 0.75 + 0.75 * 0.75), // diagonal distance (corner of square)
+        angle: Math.atan2(-0.75, -0.75), // Bottom-left corner (225°)
+        baseY: 0.55,
+        oscillationSpeed: 0.8,
+        oscillationAmount: 0.35,
+        orbitSpeed: 0.5,
+        visible: true, // render toggle
+        name: "Item 3 (Green)", // for UI
+      },
+      {
+        mesh: boxMesh4,
+        distance: Math.sqrt(0.75 * 0.75 + 0.75 * 0.75), // diagonal distance (corner of square)
+        angle: Math.atan2(-0.75, 0.75), // Bottom-right corner (315°)
+        baseY: 0.25, // base Y position
+        oscillationSpeed: 1.1, // oscillation frequency multiplier
+        oscillationAmount: 0.28, // how much it moves up/down
+        orbitSpeed: 0.5, // rotation speed multiplier
+        visible: true, // render toggle
+        name: "Item 4 (Yellow)", // for UI
+      },
+    ];
 
     // Create a character tweak pane folder
     this.#character_.customParams = {
@@ -591,6 +669,20 @@ class Project extends App {
         min: 0,
         max: 3,
         step: 0.01,
+      });
+
+      // Character Items visibility controls
+      const itemsFolder = this.Pane.addFolder({
+        title: "Character Items",
+        expanded: false,
+      });
+
+      this.#characterItems_.forEach((item) => {
+        itemsFolder
+          .addBinding(item, "visible", { label: item.name })
+          .on("change", (evt) => {
+            item.mesh.visible = evt.value;
+          });
       });
     }
   }
@@ -757,6 +849,35 @@ class Project extends App {
     this.#sun_.target.position.copy(this.#characterGroup_.position);
   }
 
+  /**
+   * Updates character items (orbital cylinders) with rotation and oscillation
+   * - Items orbit around the character in the XZ plane
+   * - Each item oscillates up and down with different speeds/amounts
+   * @param {*} totalElapsedTime - Total time elapsed since start
+   */
+  #updateCharacterItems_(totalElapsedTime) {
+    this.#characterItems_.forEach((item) => {
+      // Only update visible items
+      if (!item.visible) return;
+
+      // Update orbital angle based on time and item's orbit speed
+      const currentAngle = item.angle + totalElapsedTime * item.orbitSpeed;
+
+      // Calculate new position in XZ plane (orbital motion)
+      const x = Math.cos(currentAngle) * item.distance;
+      const z = Math.sin(currentAngle) * item.distance;
+
+      // Calculate Y position with oscillation (sine wave)
+      const oscillation =
+        Math.sin(totalElapsedTime * item.oscillationSpeed) *
+        item.oscillationAmount;
+      const y = item.baseY + oscillation;
+
+      // Update mesh position (relative to character group)
+      item.mesh.position.set(x, y, z);
+    });
+  }
+
   onStep(elapsedTime, totalElapsedTime) {
     this.#transparentScene_.traverse((obj) => {
       if (obj.isMesh) {
@@ -767,6 +888,7 @@ class Project extends App {
     });
 
     this.#updateCharacterMovement_(elapsedTime);
+    this.#updateCharacterItems_(totalElapsedTime);
     this.#updateCamera_(elapsedTime);
     this.#updateSun_(elapsedTime);
   }
