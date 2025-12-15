@@ -128,3 +128,75 @@ Implemented environment-based conditional loading for development tools to keep 
   - Better performance (no debug overhead in production)
   - Same codebase for both environments
   - Full debug tools available during development
+
+### Character Orbital Items System
+
+Implemented orbital animation system for character items with visibility controls:
+
+- **Created `#characterItems_` Array** - Stores 4 cylinder meshes that orbit the character:
+  - Each item has: mesh, distance, angle, baseY, oscillationSpeed, oscillationAmount, orbitSpeed, visible, name
+  - Items positioned at corners of a square formation around character
+  - Scaled down to 35% of original size (65% reduction)
+
+- **Orbital Motion** (`#updateCharacterItems_` method):
+  - Calculates circular motion in XZ plane using `Math.cos/sin(angle * orbitSpeed)`
+  - Each item maintains constant distance while rotating around character
+  - Independent orbit speeds (0.5 base) with varying oscillation rates (0.8-1.3)
+
+- **Vertical Oscillation**:
+  - Sine wave pattern for up/down movement: `Math.sin(time * speed) * amount`
+  - Different oscillation amounts (0.25-0.35) create varied visual rhythm
+  - Base Y positions offset (0.25, 0.55) for depth variation
+
+- **Visibility System**:
+  - Added Tweakpane folder "Character Items" with toggle for each item
+  - `visible` property controls both mesh visibility and position updates
+  - Early return in update function prevents calculations for hidden items
+
+### Boundary Detection System
+
+Implemented character movement constraints based on floor dimensions:
+
+- **Added Private Fields**:
+  - `#floor_` - Reference to ground mesh for dimension calculations
+  - `#boundaryThreshold_` - Configurable distance from edge (default: 1.5 units)
+
+- **Movement Clamping** (`#updateCharacterMovement_` method):
+  - Calculates new position before applying to character
+  - Gets floor dimensions from PlaneGeometry parameters (20x20)
+  - Boundary limits: `(floor_dimension / 2) - boundaryThreshold`
+  - Uses `THREE.MathUtils.clamp()` to constrain X/Z within boundaries
+  - Creates "inner fence" preventing character from approaching edge
+
+- **Tweakpane Integration**:
+  - Added "Boundary Threshold" slider (0-10, step 0.1) to Character folder
+  - Real-time updates via onChange handler
+  - Public getter `BoundaryThreshold` for external access
+
+- **Result**: Character constrained to 17x17 area on 20x20 floor (with default 1.5 threshold)
+
+### Boundary Turtle Placement
+
+Created 8 turtle instances positioned around boundary perimeter as visual markers:
+
+- **Turtle Positioning System**:
+  - Load single turtle model, clone for 8 instances (memory efficient)
+  - Calculate boundary coordinates: `boundaryX/Z = (floorSize / 2) - threshold`
+  - 4 corner positions: NE, NW, SW, SE at diagonal coordinates (±8.5, ±8.5)
+  - 4 edge midpoints: North, South, East, West at (0 or ±8.5, ±8.5 or 0)
+
+- **Inward Rotation Logic** (main.js:169-175):
+  - Calculate direction vector from turtle position to center: `direction = (0 - pos.x, 0 - pos.z)`
+  - Y-axis rotation uses `Math.atan2(directionX, directionZ)` - note parameter order
+  - **Critical**: Three.js Y-axis rotation requires `atan2(x, z)` NOT `atan2(z, x)`
+  - Each turtle faces center regardless of position (corners face diagonally, edges face perpendicular)
+
+- **Forcefield Integration**:
+  - Each turtle gets forcefield via `#createForceFieldForModel_()`
+  - Forcefields positioned using bounding box centers (handles non-centered pivots)
+  - All 8 turtles stored in `#objects_` array with descriptive names
+
+- **Tweakpane Controls**:
+  - Individual folders for each turtle (`turtle_0` through `turtle_7`)
+  - Position, rotation, and scale controls per instance
+  - Rotation values include calculated `angleToCenter` for accurate orientation

@@ -90,7 +90,7 @@ class Project extends App {
 
     // Add a light tweak pane folder (only in dev mode)
     if (this.Pane) {
-      const lightFolder = this.Pane.addFolder({ title: "Sunlight" });
+      const lightFolder = this.Pane.addFolder({ title: "Sunlight", expanded: false });
       lightFolder.addBinding(this.#sun_, "color", {
         view: "color",
         color: { type: "float" },
@@ -121,62 +121,96 @@ class Project extends App {
     // Store floor reference for boundary detection
     this.#floor_ = groundMesh;
 
-    // Depth Portion
-    // create a cube in the middle
-    const cubeMaterial = new THREE.MeshStandardMaterial({
-      color: 0x808080,
-      metalness: 0,
-      roughness: 0.8,
-    });
-    const cubeGeometry = new THREE.BoxGeometry(1, 1, 1);
-    const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
-    cube.position.set(4, 0, 3);
-    cube.receivehadow = true;
-    cube.castShadow = true;
-    this.addToScene(cube);
-    this.#createForceFieldForModel_(cube);
+    // Load turtle model once and create 8 instances positioned around boundary
+    const turtleModel = await this.LoadGLB_("./models/turtle.glb");
 
-    // load turtle
+    // Calculate boundary position based on floor dimensions and threshold
+    const floorWidth = groundGeometry.parameters.width;
+    const floorHeight = groundGeometry.parameters.height;
+    const boundaryX = floorWidth / 2 - this.#boundaryThreshold_;
+    const boundaryZ = floorHeight / 2 - this.#boundaryThreshold_;
 
-    const turtle = await this.LoadGLB_("./models/turtle.glb");
-    turtle.traverse((c) => {
-      if (c.isMesh) {
-        c.castShadow = true;
-        c.receiveShadow = true;
-        c.shadowSide = THREE.DoubleSide;
-      }
-    });
-    // @TODO: need to adjust model pivot point in Blender
+    // Define 8 turtle positions around the boundary
+    // 4 corners + 4 edge midpoints
+    const turtlePositions = [
+      // Corners
+      { x: boundaryX, z: boundaryZ, name: "NE Corner" },      // Top-right
+      { x: -boundaryX, z: boundaryZ, name: "NW Corner" },     // Top-left
+      { x: -boundaryX, z: -boundaryZ, name: "SW Corner" },    // Bottom-left
+      { x: boundaryX, z: -boundaryZ, name: "SE Corner" },     // Bottom-right
+      // Edge midpoints
+      { x: 0, z: boundaryZ, name: "North Edge" },             // Top middle
+      { x: -boundaryX, z: 0, name: "West Edge" },             // Left middle
+      { x: 0, z: -boundaryZ, name: "South Edge" },            // Bottom middle
+      { x: boundaryX, z: 0, name: "East Edge" },              // Right middle
+    ];
+
     const turtleParams = {
       scalar: 0.37,
-      position: { x: -3, y: -1.15, z: 4 },
+      y: -1.15,
       rotation: { x: -0.05, y: 0, z: 0 },
     };
-    turtle.position.set(
-      turtleParams.position.x,
-      turtleParams.position.y,
-      turtleParams.position.z
-    );
-    turtle.scale.setScalar(turtleParams.scalar);
-    turtle.rotation.set(
-      turtleParams.rotation.x,
-      turtleParams.rotation.y,
-      turtleParams.rotation.z
-    );
-    this.Scene.add(turtle);
-    const forcefield = this.#createForceFieldForModel_(turtle);
-    if (this.Pane) {
-      this.#createModelBinding_("turtle", turtle, this.Pane, turtleParams);
-    }
-    this.#objects_.push({
-      name: "turtle",
-      mesh: turtle,
-      forcefield: forcefield,
+
+    // Create and position each turtle
+    turtlePositions.forEach((pos, index) => {
+      const turtle = turtleModel.clone();
+      turtle.traverse((c) => {
+        if (c.isMesh) {
+          c.castShadow = true;
+          c.receiveShadow = true;
+          c.shadowSide = THREE.DoubleSide;
+        }
+      });
+
+      // Position the turtle
+      turtle.position.set(pos.x, turtleParams.y, pos.z);
+      turtle.scale.setScalar(turtleParams.scalar);
+
+      // Calculate angle to face center (origin at 0,0)
+      // Direction vector from turtle position to center
+      const directionX = 0 - pos.x;
+      const directionZ = 0 - pos.z;
+      // atan2 gives the angle in radians
+      // In Three.js Y-axis rotation, we use atan2(x, z) not atan2(z, x)
+      const angleToCenter = Math.atan2(directionX, directionZ);
+
+      // Apply rotations: base X rotation + Y rotation to face center
+      turtle.rotation.set(
+        turtleParams.rotation.x,
+        angleToCenter,
+        turtleParams.rotation.z
+      );
+
+      this.Scene.add(turtle);
+      const forcefield = this.#createForceFieldForModel_(turtle);
+
+      if (this.Pane) {
+        this.#createModelBinding_(
+          `turtle_${index}`,
+          turtle,
+          this.Pane,
+          {
+            scalar: turtleParams.scalar,
+            position: { x: pos.x, y: turtleParams.y, z: pos.z },
+            rotation: {
+              x: turtleParams.rotation.x,
+              y: angleToCenter,
+              z: turtleParams.rotation.z,
+            },
+          }
+        );
+      }
+
+      this.#objects_.push({
+        name: `turtle_${index} (${pos.name})`,
+        mesh: turtle,
+        forcefield: forcefield,
+      });
     });
   }
 
   #createModelBinding_(name, model, pane, params) {
-    const folder = pane.addFolder({ title: name });
+    const folder = pane.addFolder({ title: name, expanded: false });
 
     // We mainly want the position and scale so we can just tweak
     //  the orientation in the scene
@@ -283,7 +317,7 @@ class Project extends App {
 
     // Create forcefield tweak pane folder (only in dev mode)
     if (this.Pane) {
-      const forceFieldFolder = this.Pane.addFolder({ title: "Forcefield" });
+      const forceFieldFolder = this.Pane.addFolder({ title: "Forcefield", expanded: false });
 
       // Custom params for tweakpane
       const forceFieldParams = {
@@ -599,7 +633,7 @@ class Project extends App {
 
     // Only add Tweakpane controls in dev mode
     if (this.Pane) {
-      const charFolder = this.Pane.addFolder({ title: "Character" });
+      const charFolder = this.Pane.addFolder({ title: "Character", expanded: false });
       // NOTE: boolean params can just follow `addBinding(paramObject, paramProperty)`
       charFolder
         .addBinding(this.#character_.customParams, "wireframe")
@@ -723,7 +757,7 @@ class Project extends App {
 
     // Only add Tweakpane controls in dev mode
     if (this.Pane) {
-      const bgFolder = this.Pane.addFolder({ title: "Background" });
+      const bgFolder = this.Pane.addFolder({ title: "Background", expanded: false });
 
       bgFolder
         .addBinding(this.#environment_.customParams, "fogColor", {
