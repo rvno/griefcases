@@ -1,10 +1,16 @@
 @font-face {
   font-family: "Bitter";
-
   font-style: normal;
-  font-weight: 400;
-  src: url("fonts/Bitter-Regular.ttf") format("ttf");
-  letter-spacing: 0.03em;
+  font-weight: 100 900;
+  src: url("fonts/Bitter/Bitter-VariableFont_wght.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "Bitter";
+  font-style: italic;
+  font-weight: 100 900;
+  src: url("fonts/Bitter/Bitter-Italic-VariableFont_wght.ttf")
+    format("truetype");
 }
 
 * {
@@ -21,6 +27,9 @@
   --theme-infinity: hsl(194.05deg 99.84% 79.43%);
   --noise-invert: 0;
   --noise-brightness: 1;
+}
+html {
+  font-size: calc(100vw / 1920 * 16);
 }
 
 html,
@@ -126,7 +135,7 @@ img {
 
 .loader__instruction {
   opacity: 0;
-  font-size: clamp(0.875rem, 2.5vw, 1.125rem);
+  font-size: clamp(1rem, 10vw, 2.4rem);
   font-weight: 300;
   letter-spacing: 0.03em;
   line-height: 1.6;
@@ -145,7 +154,7 @@ img {
 }
 
 .logo {
-  width: 3rem;
+  width: 4.8rem;
   filter: drop-shadow(-2px -4px 40px rgba(0, 0, 0, 0.85));
   opacity: 0.6;
 }
@@ -831,8 +840,36 @@ section#g {
 }
 
 .g-slide h1 {
-  /* color: white; */
-  font-size: 72px;
+  font-size: 8rem;
+}
+
+.g-slide h2 {
+  font-size: 7.2rem;
+}
+
+.g-slide__content {
+  width: 70rem;
+}
+
+.g-slide p {
+  font-size: 1.8rem;
+  margin-top: 6rem;
+  text-align: center;
+}
+
+.g-slide blockquote {
+  font-size: 3rem;
+  margin-top: 3rem;
+}
+
+.g-slide cite {
+  font-size: 3rem;
+  float: right;
+  margin-top: 0.8rem;
+}
+
+.g-slide blockquote + p {
+  margin-top: 3rem;
 }
 
 #sky {
@@ -845,12 +882,32 @@ section#g {
 
 @media screen and (min-width: 768px) {
   .logo {
-    width: 5.5rem;
+    width: 6.8rem;
   }
 }
 
 @media screen and (min-width: 1024px) {
   .logo {
-    width: 7rem;
+    width: 10rem;
   }
+}
+
+/* ============================================
+   Intro Text Animation Styles
+   ============================================ */
+
+.intro-text-wrapper {
+  display: inline-block;
+}
+
+.intro-line-wrapper {
+  overflow: hidden;
+  display: block;
+}
+
+.intro-line {
+  display: inline-block;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
