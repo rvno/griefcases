@@ -291,8 +291,7 @@ section {
 
 .title {
   position: relative;
-  width: max-content;
-  height: 200px;
+  width: auto;
   margin: 1.5em;
   clip-path: polygon(0 0, 100% 0, 100% 100%, 0% 100%);
   z-index: 2;
@@ -300,9 +299,9 @@ section {
 
 .title h1 {
   position: relative;
-  color: #fff;
-  font-size: 85px;
-  font-weight: 900;
+  color: var(--theme-g);
+  font-size: 7rem;
+  font-weight: 400;
   letter-spacing: -2px;
   line-height: 0.9;
   text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.5);
@@ -704,6 +703,10 @@ section {
   mask: url("/masks/black-infinity-leash-solid.svg") center no-repeat;
 }
 
+.masked-section--hourglass {
+  --hourglass-mask-opacity: 0.48;
+}
+
 .masked-section--hourglass::after {
   content: "";
   display: block;
@@ -714,7 +717,7 @@ section {
   height: 100%;
   background-color: var(--theme-hourglass);
   z-index: 5;
-  opacity: 0.48;
+  opacity: var(--hourglass-mask-opacity);
 }
 
 .masked-section--infinity::after {

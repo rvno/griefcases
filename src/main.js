@@ -18,6 +18,16 @@ class Project extends App {
   #floor_ = null; // Floor mesh reference
   #boundaryThreshold_ = 1.5; // Distance from floor edge where character is blocked
 
+  // Proximity detection
+  #interactionThreshold_ = 1.28; // Distance threshold for object interaction
+  #interactedObjects_ = new Set(); // Track which objects have been interacted with
+  #lastProximityCheck_ = 0; // Last time proximity check was performed
+  #proximityCheckInterval_ = 0.1; // Throttle interval in seconds
+  #targetCharacterOpacity_ = 0.25; // Target opacity for character (starts at initial value)
+  #hourglassMaskElement_ = null; // Reference to hourglass mask element
+  #initialHourglassMaskOpacity_ = null; // Initial opacity of hourglass mask
+  #targetHourglassMaskOpacity_ = null; // Target opacity for hourglass mask
+
   // Environment
   #environment_ = {};
 
@@ -63,6 +73,9 @@ class Project extends App {
 
     // 3rd Person Camera (pass Pane which may be null in production)
     this.#setup3rdCamera_(this.Pane);
+
+    // Setup hourglass mask element reference
+    this.#setupHourglassMask_();
   }
 
   /**
@@ -278,6 +291,8 @@ class Project extends App {
     forceFieldMaterial.uniforms.fadeBottom.value = topOfField - fadeStartHeight;
 
     this.#transparentScene_.add(forceField);
+
+    return forceField;
   }
 
   async #setupForceFieldMaterial_() {
@@ -626,6 +641,7 @@ class Project extends App {
       position: { x: 0, y: -1.5, z: 0 },
       rotFactor: 0.2,
       boundaryThreshold: this.#boundaryThreshold_,
+      interactionThreshold: this.#interactionThreshold_,
     };
     let previousValues = {
       position: { x: 0, y: -1.5, z: 0 },
@@ -725,6 +741,18 @@ class Project extends App {
         })
         .on("change", (evt) => {
           this.#boundaryThreshold_ = evt.value;
+        });
+
+      // Interaction threshold control
+      charFolder
+        .addBinding(this.#character_.customParams, "interactionThreshold", {
+          label: "Interaction Threshold",
+          min: 0,
+          max: 15,
+          step: 0.1,
+        })
+        .on("change", (evt) => {
+          this.#interactionThreshold_ = evt.value;
         });
 
       // Character Items visibility controls
@@ -846,12 +874,96 @@ class Project extends App {
   // }
 
   /**
+   * Setup hourglass mask element reference and get initial opacity
+   */
+  #setupHourglassMask_() {
+    this.#hourglassMaskElement_ = document.querySelector('.masked-section--hourglass');
+    if (this.#hourglassMaskElement_) {
+      // Get computed style to find initial ::after opacity
+      const style = window.getComputedStyle(this.#hourglassMaskElement_, '::after');
+      const initialOpacity = parseFloat(style.opacity);
+      this.#initialHourglassMaskOpacity_ = isNaN(initialOpacity) ? 1 : initialOpacity;
+      this.#targetHourglassMaskOpacity_ = this.#initialHourglassMaskOpacity_;
+
+      console.log(`Hourglass mask initial opacity: ${this.#initialHourglassMaskOpacity_}`);
+    }
+  }
+
+  /**
+   * Checks proximity between character and objects in the scene
+   * - Calculates distance from character center to object bounding box centers
+   * - Increases character opacity incrementally with each discovery (with lerping)
+   * - Changes forcefield color to active state
+   * - Updates hourglass mask opacity
+   * - Tracks completion when all objects have been interacted with
+   */
+  #checkObjectProximity_() {
+    // Get character position (using the group position which is the center)
+    const characterPos = this.#characterGroup_.position;
+
+    this.#objects_.forEach((object) => {
+      // Calculate bounding box center of the object
+      const boundingBox = new THREE.Box3().setFromObject(object.mesh);
+      const objectCenter = new THREE.Vector3();
+      boundingBox.getCenter(objectCenter);
+
+      // Calculate distance between character center and object center
+      const distance = characterPos.distanceTo(objectCenter);
+
+      // Check if within interaction threshold
+      if (distance <= this.#interactionThreshold_) {
+        // Check if this object hasn't been interacted with yet
+        if (!this.#interactedObjects_.has(object.name)) {
+          this.#interactedObjects_.add(object.name);
+
+          // Calculate target opacity increment
+          const startingOpacity = 0.25; // Use fixed starting opacity
+          const targetOpacity = 1.0;
+          const opacityDifference = targetOpacity - startingOpacity;
+          const opacityIncrement = opacityDifference / this.#objects_.length;
+
+          // Calculate new target opacity based on number of discovered objects
+          this.#targetCharacterOpacity_ = startingOpacity + (opacityIncrement * this.#interactedObjects_.size);
+
+          // Update forcefield color to active state
+          if (object.forcefield && object.forcefield.material) {
+            const material = object.forcefield.material;
+            if (material.uniforms && material.uniforms.color2) {
+              material.uniforms.color2.value.set(0.33, 0.20, 0.02);
+              console.log(`Updated forcefield color for ${object.name}:`, material.uniforms.color2.value);
+            } else {
+              console.warn(`No color2 uniform found for ${object.name}`);
+            }
+          } else {
+            console.warn(`No forcefield or material for ${object.name}`);
+          }
+
+          // Update hourglass mask target opacity
+          if (this.#hourglassMaskElement_ && this.#initialHourglassMaskOpacity_ !== null) {
+            const maskOpacityDifference = this.#initialHourglassMaskOpacity_ - 0;
+            const maskOpacityDecrement = maskOpacityDifference / this.#objects_.length;
+            this.#targetHourglassMaskOpacity_ = this.#initialHourglassMaskOpacity_ - (maskOpacityDecrement * this.#interactedObjects_.size);
+          }
+
+          console.log(`Discovered ${object.name} (${this.#interactedObjects_.size}/${this.#objects_.length}). Target opacity: ${this.#targetCharacterOpacity_.toFixed(2)}`);
+
+          // Check if all objects have been discovered
+          if (this.#interactedObjects_.size === this.#objects_.length) {
+            console.log("Completed! All objects discovered!");
+          }
+        }
+      }
+    });
+  }
+
+  /**
    * Utilizes InputManager to update/handle the character movement logic
    * - utilized within the `step` function
    * @param {*} elapsedTime
+   * @param {*} totalElapsedTime
    */
-  #updateCharacterMovement_(elapsedTime) {
-    const MOVE_SPEED = 1;
+  #updateCharacterMovement_(elapsedTime, totalElapsedTime) {
+    const MOVE_SPEED = 2.8;
     let angle = 0;
 
     // Retrieve InputManager actions
@@ -903,10 +1015,14 @@ class Project extends App {
     }
 
     // Check the character's position relative to objects within the scene.
-    this.#objects_.forEach((object) => {
-      // console.log(object.)
-      // console.log(object);
-    });
+    // Throttle proximity checks for performance using elapsed time
+    if (
+      totalElapsedTime - this.#lastProximityCheck_ >
+      this.#proximityCheckInterval_
+    ) {
+      this.#lastProximityCheck_ = totalElapsedTime;
+      this.#checkObjectProximity_();
+    }
 
     // NOTE: Make sure to apply the quaternion (character's rotation) first
     // Moves the character forward/backward
@@ -979,10 +1095,50 @@ class Project extends App {
       }
     });
 
-    this.#updateCharacterMovement_(elapsedTime);
+    this.#updateCharacterMovement_(elapsedTime, totalElapsedTime);
     this.#updateCharacterItems_(totalElapsedTime);
     this.#updateCamera_(elapsedTime);
     this.#updateSun_(elapsedTime);
+
+    // Lerp character opacity towards target
+    if (this.#character_) {
+      const lerpFactor = 0.05; // Smooth lerp factor (lower = smoother)
+      let needsUpdate = false;
+
+      this.#character_.traverse((c) => {
+        if (c.isMesh) {
+          const currentOpacity = c.material.opacity;
+          const newOpacity = THREE.MathUtils.lerp(currentOpacity, this.#targetCharacterOpacity_, lerpFactor);
+
+          if (Math.abs(newOpacity - currentOpacity) > 0.001) {
+            c.material.opacity = newOpacity;
+            needsUpdate = true;
+          }
+        }
+      });
+
+      // Update customParams if opacity changed
+      if (needsUpdate) {
+        const firstMesh = this.#character_.children.find(c => c.isMesh);
+        if (firstMesh) {
+          this.#character_.customParams.opacity = firstMesh.material.opacity;
+        }
+      }
+    }
+
+    // Lerp hourglass mask opacity towards target
+    if (this.#hourglassMaskElement_ && this.#targetHourglassMaskOpacity_ !== null) {
+      // We can't directly lerp CSS ::after opacity, so we use CSS custom properties
+      const currentOpacity = parseFloat(
+        getComputedStyle(this.#hourglassMaskElement_).getPropertyValue('--hourglass-mask-opacity') || this.#initialHourglassMaskOpacity_
+      );
+      const lerpFactor = 0.05;
+      const newOpacity = THREE.MathUtils.lerp(currentOpacity, this.#targetHourglassMaskOpacity_, lerpFactor);
+
+      if (Math.abs(newOpacity - currentOpacity) > 0.001) {
+        this.#hourglassMaskElement_.style.setProperty('--hourglass-mask-opacity', newOpacity);
+      }
+    }
   }
 
   // Getter for boundary threshold (can be referenced elsewhere)
