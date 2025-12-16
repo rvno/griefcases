@@ -345,8 +345,8 @@ section {
 .masked-image-container--2 {
   position: absolute;
   top: 35%;
-  width: 350px;
-  left: 25%;
+  width: 40rem;
+  left: 0;
 }
 .masked-image-container--3 {
   position: absolute;
