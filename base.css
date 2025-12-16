@@ -331,20 +331,21 @@ section {
   filter: grayscale(0) blur(1px);
 }
 
+.masked-image__image {
+  object-fit: contain;
+}
+
 .masked-image-container--1 {
   position: absolute;
   top: 15%;
-  width: 350px;
-  left: 45%;
-}
-
-.masked-image-container--2 {
+  width: 40rem;
+  left: 25%;
 }
 
 .masked-image-container--2 {
   position: absolute;
   top: 35%;
-  width: 200px;
+  width: 350px;
   left: 25%;
 }
 .masked-image-container--3 {
@@ -362,8 +363,11 @@ section {
 .masked-image-container--5 {
   position: absolute;
   top: 50%;
-  width: 150px;
+  width: 45rem;
   left: 45%;
+}
+
+.masked-image-container--7 {
 }
 
 .masked-image {
