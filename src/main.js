@@ -90,7 +90,10 @@ class Project extends App {
 
     // Add a light tweak pane folder (only in dev mode)
     if (this.Pane) {
-      const lightFolder = this.Pane.addFolder({ title: "Sunlight", expanded: false });
+      const lightFolder = this.Pane.addFolder({
+        title: "Sunlight",
+        expanded: false,
+      });
       lightFolder.addBinding(this.#sun_, "color", {
         view: "color",
         color: { type: "float" },
@@ -134,15 +137,15 @@ class Project extends App {
     // 4 corners + 4 edge midpoints
     const turtlePositions = [
       // Corners
-      { x: boundaryX, z: boundaryZ, name: "NE Corner" },      // Top-right
-      { x: -boundaryX, z: boundaryZ, name: "NW Corner" },     // Top-left
-      { x: -boundaryX, z: -boundaryZ, name: "SW Corner" },    // Bottom-left
-      { x: boundaryX, z: -boundaryZ, name: "SE Corner" },     // Bottom-right
+      { x: boundaryX, z: boundaryZ, name: "NE Corner" }, // Top-right
+      { x: -boundaryX, z: boundaryZ, name: "NW Corner" }, // Top-left
+      { x: -boundaryX, z: -boundaryZ, name: "SW Corner" }, // Bottom-left
+      { x: boundaryX, z: -boundaryZ, name: "SE Corner" }, // Bottom-right
       // Edge midpoints
-      { x: 0, z: boundaryZ, name: "North Edge" },             // Top middle
-      { x: -boundaryX, z: 0, name: "West Edge" },             // Left middle
-      { x: 0, z: -boundaryZ, name: "South Edge" },            // Bottom middle
-      { x: boundaryX, z: 0, name: "East Edge" },              // Right middle
+      { x: 0, z: boundaryZ, name: "North Edge" }, // Top middle
+      { x: -boundaryX, z: 0, name: "West Edge" }, // Left middle
+      { x: 0, z: -boundaryZ, name: "South Edge" }, // Bottom middle
+      { x: boundaryX, z: 0, name: "East Edge" }, // Right middle
     ];
 
     const turtleParams = {
@@ -185,20 +188,15 @@ class Project extends App {
       const forcefield = this.#createForceFieldForModel_(turtle);
 
       if (this.Pane) {
-        this.#createModelBinding_(
-          `turtle_${index}`,
-          turtle,
-          this.Pane,
-          {
-            scalar: turtleParams.scalar,
-            position: { x: pos.x, y: turtleParams.y, z: pos.z },
-            rotation: {
-              x: turtleParams.rotation.x,
-              y: angleToCenter,
-              z: turtleParams.rotation.z,
-            },
-          }
-        );
+        this.#createModelBinding_(`turtle_${index}`, turtle, this.Pane, {
+          scalar: turtleParams.scalar,
+          position: { x: pos.x, y: turtleParams.y, z: pos.z },
+          rotation: {
+            x: turtleParams.rotation.x,
+            y: angleToCenter,
+            z: turtleParams.rotation.z,
+          },
+        });
       }
 
       this.#objects_.push({
@@ -317,7 +315,10 @@ class Project extends App {
 
     // Create forcefield tweak pane folder (only in dev mode)
     if (this.Pane) {
-      const forceFieldFolder = this.Pane.addFolder({ title: "Forcefield", expanded: false });
+      const forceFieldFolder = this.Pane.addFolder({
+        title: "Forcefield",
+        expanded: false,
+      });
 
       // Custom params for tweakpane
       const forceFieldParams = {
@@ -633,7 +634,10 @@ class Project extends App {
 
     // Only add Tweakpane controls in dev mode
     if (this.Pane) {
-      const charFolder = this.Pane.addFolder({ title: "Character", expanded: false });
+      const charFolder = this.Pane.addFolder({
+        title: "Character",
+        expanded: false,
+      });
       // NOTE: boolean params can just follow `addBinding(paramObject, paramProperty)`
       charFolder
         .addBinding(this.#character_.customParams, "wireframe")
@@ -757,7 +761,10 @@ class Project extends App {
 
     // Only add Tweakpane controls in dev mode
     if (this.Pane) {
-      const bgFolder = this.Pane.addFolder({ title: "Background", expanded: false });
+      const bgFolder = this.Pane.addFolder({
+        title: "Background",
+        expanded: false,
+      });
 
       bgFolder
         .addBinding(this.#environment_.customParams, "fogColor", {
@@ -894,6 +901,12 @@ class Project extends App {
         halfHeight
       );
     }
+
+    // Check the character's position relative to objects within the scene.
+    this.#objects_.forEach((object) => {
+      // console.log(object.)
+      // console.log(object);
+    });
 
     // NOTE: Make sure to apply the quaternion (character's rotation) first
     // Moves the character forward/backward

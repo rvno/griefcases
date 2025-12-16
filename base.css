@@ -302,11 +302,24 @@ section {
 }
 
 /* masked image */
+.masked-image-container {
+  filter: grayscale(1) blur(2px);
+  transition: filter 0.4s ease-in-out;
+  will-change: filter;
+}
+
+.masked-image-container:hover {
+  filter: grayscale(0) blur(1px);
+}
+
 .masked-image-container--1 {
   position: absolute;
   top: 15%;
   width: 350px;
   left: 45%;
+}
+
+.masked-image-container--2 {
 }
 
 .masked-image-container--2 {
@@ -793,13 +806,11 @@ section {
   border-color: rgba(255, 255, 255, 0.5);
 }
 
-/* .mask-container--g {
-  overflow-y: auto;
-  overflow-x: hidden;
-  height: auto;
-  min-height: 100svh;
-} */
-
+section#g {
+  .test {
+    background-color: hsl(223, 87%, 24%, 0.77);
+  }
+}
 .g-slides {
   min-height: 100%;
   width: 100%;
