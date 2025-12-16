@@ -959,8 +959,57 @@ class Project extends App {
   /**
    * Utilizes InputManager to update/handle the character movement logic
    * - utilized within the `step` function
-   * @param {*} elapsedTime
-   * @param {*} totalElapsedTime
+   *
+   * CHANGELOG (2025-12-15): Proximity-Based Interaction System
+   * =========================================================
+   * Added proximity detection system that tracks when the character approaches objects (turtles).
+   *
+   * HOW IT WORKS:
+   * 1. Distance Calculation:
+   *    - Every 0.1 seconds (throttled for performance), calculates distance between character
+   *      center position and each object's bounding box center using THREE.Vector3.distanceTo()
+   *    - Configurable threshold (default: 1.28 units, adjustable via Tweakpane)
+   *
+   * 2. Interaction Detection:
+   *    - When distance <= threshold, object is "discovered"
+   *    - Tracked via Set (#interactedObjects_) to prevent duplicate interactions
+   *    - Each discovery triggers three synchronized effects (see below)
+   *
+   * 3. Visual Feedback Effects (all use smooth lerping in onStep):
+   *    a) Character Opacity:
+   *       - Starts at 0.25 (25%), increments toward 1.0 (100%) with each discovery
+   *       - Increment = (1.0 - 0.25) / 8 objects = 0.09375 per discovery
+   *       - Lerps smoothly (factor: 0.05) toward target opacity each frame
+   *
+   *    b) Forcefield Color:
+   *       - Changes object's forcefield color2 uniform from blue to orange
+   *       - New color: RGB(0.33, 0.20, 0.02) - warm amber/golden tone
+   *       - Instant change (no lerping) provides immediate visual confirmation
+   *
+   *    c) Hourglass Mask Opacity:
+   *       - CSS ::after pseudo-element on .masked-section--hourglass
+   *       - Starts at 0.48 (48%), decrements toward 0 (fully transparent)
+   *       - Decrement = 0.48 / 8 objects = 0.06 per discovery
+   *       - Lerps smoothly via CSS custom property --hourglass-mask-opacity
+   *
+   * 4. Throttling:
+   *    - Distance checks throttled to every 0.1s using totalElapsedTime
+   *    - Prevents performance issues from continuous bounding box calculations
+   *    - See #proximityCheckInterval_ and #lastProximityCheck_
+   *
+   * 5. Completion:
+   *    - When all 8 objects discovered, logs "Completed!" to console
+   *    - Character reaches full opacity (1.0)
+   *    - Hourglass mask becomes fully transparent (0)
+   *
+   * RELATED CODE:
+   * - #checkObjectProximity_() - Distance calculation and interaction logic
+   * - onStep() lines 987-1025 - Lerping implementation for smooth transitions
+   * - #setupHourglassMask_() - CSS custom property initialization
+   * - base.css lines 707-722 - Hourglass mask CSS with custom property
+   *
+   * @param {*} elapsedTime - Delta time since last frame
+   * @param {*} totalElapsedTime - Total elapsed time since app start
    */
   #updateCharacterMovement_(elapsedTime, totalElapsedTime) {
     const MOVE_SPEED = 2.8;
